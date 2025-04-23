@@ -38,13 +38,13 @@ export default async function Home() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <Button asChild size="lg">
-                <Link href="/blog">
+                <Link href="/blog" legacyBehavior>
                   <BookOpen className="mr-2 h-4 w-4" />
                   Explore Posts
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/auth/signup">
+                <Link href="/auth/signup" legacyBehavior>
                   <PenSquare className="mr-2 h-4 w-4" />
                   Start Writing
                 </Link>
@@ -53,7 +53,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
       {/* Features section */}
       <section className="w-full py-12 md:py-24 lg:py-32">
         <div className="container px-4 md:px-6">
@@ -94,7 +93,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-
       {/* Latest posts section */}
       <section className="w-full py-12 md:py-24 lg:py-32 bg-muted/30">
         <div className="container px-4 md:px-6">
@@ -112,11 +110,11 @@ export default async function Home() {
           <div className="grid gap-6 mt-8 md:grid-cols-2 lg:grid-cols-3">
             {latestPosts && latestPosts.length > 0 ? (
               latestPosts.map((post) => (
-                <Link 
+                <Link
                   key={post.id}
                   href={`/blog/${post.slug || post.id}`}
                   className="group flex flex-col overflow-hidden rounded-lg border bg-background transition-colors hover:bg-accent/30"
-                >
+                  legacyBehavior>
                   {post.cover_image && (
                     <div className="aspect-video overflow-hidden">
                       <img

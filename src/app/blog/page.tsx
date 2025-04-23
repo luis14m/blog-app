@@ -29,7 +29,6 @@ export default async function BlogPage() {
           <Link href="/blog/new">New Post</Link>
         </Button>
       </div>
-
       {posts && posts.length > 0 ? (
         <div className="grid gap-6 md:gap-8 md:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
@@ -37,7 +36,7 @@ export default async function BlogPage() {
               key={post.id}
               href={`/blog/${post.slug || post.id}`}
               className="group flex flex-col h-full overflow-hidden rounded-lg border bg-background transition-colors hover:bg-accent/50"
-            >
+              legacyBehavior>
               <div className="relative aspect-video overflow-hidden bg-muted">
                 {post.cover_image ? (
                   <img
