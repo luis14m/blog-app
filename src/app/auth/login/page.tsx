@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+
 import {
   Card,
   CardContent,
@@ -76,7 +76,7 @@ export default function LoginPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Log in</CardTitle>
           <CardDescription>
-            Enter your email and password to log in to your account
+            Ingresa tu Email y contraseña para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -137,12 +137,12 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center text-muted-foreground">
-            Don&apos;t have an account?{" "}
+            No tienes una cuenta?{" "}
             <Link
               href="/auth/signup"
               className="underline underline-offset-4 hover:text-primary"
             >
-              Sign up
+              Registrate
             </Link>
           </div>
         </CardFooter>

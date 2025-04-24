@@ -7,6 +7,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { createClient } from "@/lib/supabase/server";
 import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
+import { generateHTML } from '@tiptap/html';
+import StarterKit from '@tiptap/starter-kit';
 
 interface PageProps {
   params: {
@@ -15,7 +17,7 @@ interface PageProps {
 }
 
 export default async function PostPage({ params }: PageProps) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { slug } = params;
 
   // Try to get post by slug first
@@ -190,27 +192,23 @@ function CommentSkeleton() {
   );
 }
 
-// Helper function to extract HTML from the content JSON
-// This is a simplified version - in a real app you'd use TipTap's 
-// generateHTML or a similar function to render the content properly
+// Helper function to extract HTML from the content JSON using TipTap
 function getHTMLFromContent(content: any): string {
-  // This is just a placeholder - in a real app, you'd parse the JSON content properly
   try {
     if (typeof content === 'string') {
       return content;
     }
-    
-    if (content && content.content) {
-      return content.content.map((node: any) => {
-        if (node.type === 'paragraph') {
-          return `<p>${node.content?.map((text: any) => text.text || '').join('') || ''}</p>`;
-        }
-        if (node.type === 'heading') {
-          const level = node.attrs?.level || 1;
-          return `<h${level}>${node.content?.map((text: any) => text.text || '').join('') || ''}</h${level}>`;
-        }
-        return '';
-      }).join('');
+
+    if (content) {
+      return generateHTML(content, [
+        StarterKit.configure({
+          heading: {
+            levels: [1, 2, 3, 4, 5, 6],
+          },
+        }),
+      ], {
+        immediatelyRender: false // Fix for SSR hydration
+      });
     }
     
     return 'No content available';

@@ -124,7 +124,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <Button asChild>
-          <Link href="/blog/new" legacyBehavior>
+          <Link href="/blog/new" >
             <PenSquare className="mr-2 h-4 w-4" />
             New Post
           </Link>
@@ -162,13 +162,13 @@ export default function DashboardPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem asChild>
-                            <Link href={`/blog/${post.slug || post.id}`} legacyBehavior>
+                            <Link href={`/blog/${post.slug || post.id}`} >
                               <EyeIcon className="mr-2 h-4 w-4" />
                               View
                             </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={`/blog/edit/${post.id}`} legacyBehavior>
+                            <Link href={`/blog/edit/${post.id}`} >
                               <PenSquare className="mr-2 h-4 w-4" />
                               Edit
                             </Link>
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                       <Link
                         href={`/blog/${comment.posts?.slug || comment.posts?.id}`}
                         className="underline hover:text-primary transition-colors"
-                        legacyBehavior>
+                        >
                         {comment.posts?.title || "Post"}
                       </Link>
                     </CardTitle>

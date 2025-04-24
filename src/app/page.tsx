@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
 
 export default async function Home() {
-  const supabase = createClient();
+  const supabase = await createClient();
   
   const { data: latestPosts } = await supabase
     .from("posts")
@@ -30,7 +30,7 @@ export default async function Home() {
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                Share Your Ideas With The World
+                Share Your Ideas
               </h1>
               <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                 A modern blogging platform where you can create, share, and discuss ideas through rich content and meaningful conversations.
@@ -38,13 +38,13 @@ export default async function Home() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <Button asChild size="lg">
-                <Link href="/blog" legacyBehavior>
+                <Link href="/blog" >
                   <BookOpen className="mr-2 h-4 w-4" />
                   Explore Posts
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link href="/auth/signup" legacyBehavior>
+                <Link href="/auth/signup" >
                   <PenSquare className="mr-2 h-4 w-4" />
                   Start Writing
                 </Link>
@@ -114,7 +114,7 @@ export default async function Home() {
                   key={post.id}
                   href={`/blog/${post.slug || post.id}`}
                   className="group flex flex-col overflow-hidden rounded-lg border bg-background transition-colors hover:bg-accent/30"
-                  legacyBehavior>
+                  >
                   {post.cover_image && (
                     <div className="aspect-video overflow-hidden">
                       <img

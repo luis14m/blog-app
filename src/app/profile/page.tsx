@@ -26,9 +26,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { createClient } from "@/lib/supabase/client";
+
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+
+import { createClient } from "@/lib/supabase/client"; // Import the client version
 
 const formSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
