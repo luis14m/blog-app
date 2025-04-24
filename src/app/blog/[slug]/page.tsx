@@ -9,6 +9,8 @@ import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
+import { getPostBySlug } from "@/services/postService";
+import { getPostAttachments } from "@/services/attachmentService";
 
 interface PageProps {
   params: {
@@ -21,37 +23,16 @@ export default async function PostPage({ params }: PageProps) {
   const { slug } = params;
 
   // Try to get post by slug first
-  let { data: post } = await supabase
-    .from("posts")
-    .select(`
-      *,
-      profiles(*)
-    `)
-    .eq("slug", slug)
-    .maybeSingle();
+  let post = await getPostBySlug(slug);
 
-  // If not found, try by ID
-  if (!post) {
-    ({ data: post } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        profiles(*)
-      `)
-      .eq("id", slug)
-      .maybeSingle());
-  }
-
+ 
   if (!post) {
     notFound();
   }
 
   // Get post attachments
-  const { data: attachments } = await supabase
-    .from("attachments")
-    .select("*")
-    .eq("post_id", post.id);
-
+  const attachments = await getPostAttachments(post.id);
+  
   // Check if current user is the post owner
   const { data: userData } = await supabase.auth.getUser();
   const isOwner = userData?.user?.id === post.user_id;

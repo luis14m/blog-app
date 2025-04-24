@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,7 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
@@ -54,6 +55,8 @@ export default function Navbar() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
   };
 
   return (

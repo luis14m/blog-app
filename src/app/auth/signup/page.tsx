@@ -1,11 +1,8 @@
 "use client";
-
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,23 +21,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { toast } from "sonner";
-import { createClient } from "@/lib/supabase/client";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address" }),
   password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string(),
+  confirmPassword: z.string()
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
+  message: "Passwords don't match",
   path: ["confirmPassword"],
 });
 
 export default function SignUpPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
+  const router = useRouter();
+  //const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -53,11 +52,14 @@ export default function SignUpPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
+    const supabase = await createClient();
     try {
       const { error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
       });
 
       if (error) {
@@ -80,12 +82,12 @@ export default function SignUpPage() {
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
           <CardDescription>
-            Enter your details below to create your account
+            Enter your email and create a password to create your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -95,9 +97,9 @@ export default function SignUpPage() {
                     <FormControl>
                       <Input 
                         placeholder="your@email.com" 
-                        type="email" 
+                        type="email"
                         autoComplete="email"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
@@ -113,15 +115,16 @@ export default function SignUpPage() {
                     <FormControl>
                       <Input 
                         placeholder="••••••••" 
-                        type="password" 
+                        type="password"
                         autoComplete="new-password"
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
                 name="confirmPassword"
@@ -142,7 +145,7 @@ export default function SignUpPage() {
               />
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -157,16 +160,16 @@ export default function SignUpPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-center text-muted-foreground">
-            Already have an account?{" "}
+        <CardFooter>
+          <p className="text-sm text-center text-muted-foreground w-full">
+            Tienes una cuenta?{" "}
             <Link
               href="/auth/login"
               className="underline underline-offset-4 hover:text-primary"
             >
-              Log in
+              Iniciar sesión
             </Link>
-          </div>
+          </p>
         </CardFooter>
       </Card>
     </div>

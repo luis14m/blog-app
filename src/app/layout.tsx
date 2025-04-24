@@ -1,12 +1,12 @@
 import "./globals.css";
 import type { Metadata } from "next";
-
+import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Navbar from "@/components/navbar";
 import { cn } from "@/lib/utils";
 
-
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Modern Blog",
@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body>
+      <body className={cn(inter.className, "min-h-screen bg-background antialiased")}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
