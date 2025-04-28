@@ -32,6 +32,7 @@ interface TiptapEditorProps {
   onAttachmentRequest?: () => void;
   editorClass?: string;
   placeholder?: string;
+  immediatelyRender?: boolean;
 }
 
 export default function TiptapEditor({

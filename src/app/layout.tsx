@@ -21,6 +21,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(inter.className, "min-h-screen bg-background antialiased")}>
+      <main className="relative px-10 py-6 lg:gap-10 lg:px-8 lg:py-8 xl:grid">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -40,6 +41,7 @@ export default function RootLayout({
           </div>
           <Toaster />
         </ThemeProvider>
+        </main>
       </body>
     </html>
   );

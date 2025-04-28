@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import TiptapEditor from "@/components/tiptap-editor";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+
+import {
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+
+  SheetClose,
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -17,33 +25,36 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import TiptapEditor from "@/components/tiptap-editor";
-import FileUploader from "@/components/file-uploader";
-import { createClient } from "@/lib/supabase/client";
+} from "./ui/form";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
+
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import { generateSlug } from "@/lib/utils";
+import FileUploader from "./file-uploader";
+import { createClient } from "@/lib/supabase/client";
+import { createPost } from "@/services/postService";
+import { Checkbox } from "@/components/ui/checkbox";
+import type {Json } from '@/types/supabase';
+
+
 
 const formSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters long" }),
+  title: z
+    .string()
+    .min(3, { message: "Title must be at least 3 characters long" }),
   excerpt: z.string().optional(),
   published: z.boolean().default(false),
   coverImage: z.string().optional(),
 });
 
-export default function NewPostPage() {
+export function NewPostSheet() {
   const router = useRouter();
   const [content, setContent] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [showUploaderDialog, setShowUploaderDialog] = useState(false);
   const [coverImageUploadOpen, setCoverImageUploadOpen] = useState(false);
+
   const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -59,8 +70,10 @@ export default function NewPostPage() {
   const handleCoverImageUpload = (files: any[]) => {
     if (files.length > 0) {
       // Get the file path from the storage
-      const { data } = supabase.storage.from("attachments").getPublicUrl(files[0].file_path);
-      
+      const { data } = supabase.storage
+        .from("attachments")
+        .getPublicUrl(files[0].file_path);
+
       if (data?.publicUrl) {
         form.setValue("coverImage", data.publicUrl);
         toast.success("Cover image uploaded successfully");
@@ -74,34 +87,20 @@ export default function NewPostPage() {
 
     try {
       const { data: userData, error: userError } = await supabase.auth.getUser();
-      
+
       if (userError || !userData.user) {
         throw new Error("You must be logged in to create a post");
       }
 
       const userId = userData.user.id;
       
-      // Generate slug from title
-      const slug = generateSlug(values.title);
-
-      // Create post
-      const { data: post, error: postError } = await supabase
-        .from("posts")
-        .insert({
-          title: values.title,
-          content,
-          excerpt: values.excerpt || null,
-          slug,
-          published: values.published,
-          user_id: userId,
-          cover_image: values.coverImage || null,
-        })
-        .select()
-        .single();
-
-      if (postError) {
-        throw postError;
-      }
+      const post = await createPost(userId, {
+        title: values.title,
+        content: content as Json,
+        excerpt: values.excerpt,
+        published: values.published,
+        cover_image: values.coverImage
+      });
 
       // Link attachments to post
       if (attachments.length > 0) {
@@ -119,7 +118,7 @@ export default function NewPostPage() {
       }
 
       toast.success("Post created successfully");
-      router.push(`/blog/${slug || post.id}`);
+      router.push('/blog');
     } catch (error: any) {
       toast.error(error.message || "Failed to create post");
     } finally {
@@ -137,8 +136,12 @@ export default function NewPostPage() {
   };
 
   return (
-    <div className="container py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Create New Post</h1>
+    
+    <SheetContent side="right" className="px-6 sm:max-w-xl overflow-y-auto">
+      <SheetHeader>
+        <SheetTitle>Create New Post</SheetTitle>
+        <SheetDescription>Start writing your new blog post..</SheetDescription>
+      </SheetHeader>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -201,14 +204,15 @@ export default function NewPostPage() {
               <FormItem>
                 <FormLabel>Excerpt</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Enter a short excerpt for your post" 
-                    className="resize-none" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Enter a short excerpt for your post"
+                    className="resize-none"
+                    {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  A brief summary of your post that will be displayed in the post list.
+                  A brief summary of your post that will be displayed in the
+                  post list.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -217,10 +221,9 @@ export default function NewPostPage() {
 
           <div className="space-y-2">
             <FormLabel>Content</FormLabel>
-            <TiptapEditor 
-              content={content} 
+            <TiptapEditor
+              content={content}
               onChange={setContent}
-              
               onAttachmentRequest={handleAttachmentRequest}
               editorClass="min-h-[300px]"
             />
@@ -232,20 +235,29 @@ export default function NewPostPage() {
               {attachments.length > 0 ? (
                 <div className="space-y-2">
                   {attachments.map((attachment) => (
-                    <div 
-                      key={attachment.id} 
+                    <div
+                      key={attachment.id}
                       className="flex items-center justify-between p-2 border rounded-md"
                     >
                       <div className="flex items-center gap-2">
                         <div className="h-8 w-8 bg-muted flex items-center justify-center rounded">
                           {attachment.file_type.startsWith("image/") ? (
                             <img
-                              src={supabase.storage.from("attachments").getPublicUrl(attachment.file_path).data?.publicUrl}
+                              src={
+                                supabase.storage
+                                  .from("attachments")
+                                  .getPublicUrl(attachment.file_path).data
+                                  ?.publicUrl
+                              }
                               alt={attachment.file_name}
                               className="h-8 w-8 object-cover rounded"
                             />
                           ) : (
-                            <span className="text-xs">{attachment.file_type.split("/")[1]?.toUpperCase() || "FILE"}</span>
+                            <span className="text-xs">
+                              {attachment.file_type
+                                .split("/")[1]
+                                ?.toUpperCase() || "FILE"}
+                            </span>
                           )}
                         </div>
                         <span className="text-sm">{attachment.file_name}</span>
@@ -255,15 +267,17 @@ export default function NewPostPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setAttachments(attachments.filter((a) => a.id !== attachment.id));
+                          setAttachments(
+                            attachments.filter((a) => a.id !== attachment.id)
+                          );
                         }}
                       >
                         Remove
                       </Button>
                     </div>
                   ))}
-                  <Button 
-                    type="button" 
+                  <Button
+                    type="button"
                     variant="outline"
                     onClick={handleAttachmentRequest}
                   >
@@ -272,9 +286,11 @@ export default function NewPostPage() {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No attachments added yet</p>
-                  <Button 
-                    type="button" 
+                  <p className="text-muted-foreground mb-4">
+                    No attachments added yet
+                  </p>
+                  <Button
+                    type="button"
                     variant="outline"
                     onClick={handleAttachmentRequest}
                   >
@@ -299,36 +315,29 @@ export default function NewPostPage() {
                 <div className="space-y-1 leading-none">
                   <FormLabel>Publish immediately</FormLabel>
                   <FormDescription>
-                    If checked, this post will be visible to everyone. Otherwise, it will be saved as a draft.
+                    If checked, this post will be visible to everyone.
+                    Otherwise, it will be saved as a draft.
                   </FormDescription>
                 </div>
               </FormItem>
             )}
           />
 
-          <div className="flex gap-4">
+          <div className="flex gap-4 mb-8">
+          <SheetClose asChild>
+              <Button variant="outline" disabled={isLoading}>
+                Cancel
+              </Button>
+            </SheetClose>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Post"
-              )}
+              {isLoading ? "Creating..." : "Create Post"}
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
+            
           </div>
         </form>
       </Form>
 
-      {/* File uploader dialog */}
+      {/* Dialogs */}
       <Dialog open={showUploaderDialog} onOpenChange={setShowUploaderDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Add Attachments</DialogTitle>
@@ -336,17 +345,20 @@ export default function NewPostPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Cover image uploader dialog */}
-      <Dialog open={coverImageUploadOpen} onOpenChange={setCoverImageUploadOpen}>
+      <Dialog
+        open={coverImageUploadOpen}
+        onOpenChange={setCoverImageUploadOpen}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogTitle>Upload Cover Image</DialogTitle>
-          <FileUploader 
-            onUploadComplete={handleCoverImageUpload} 
+          <FileUploader
+            onUploadComplete={handleCoverImageUpload}
             maxFiles={1}
             acceptedFileTypes={["image/*"]}
           />
         </DialogContent>
       </Dialog>
-    </div>
+    </SheetContent>
+  
   );
 }
