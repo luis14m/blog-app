@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
 
 export default async function Home() {

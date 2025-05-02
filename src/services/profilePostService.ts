@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { Database } from "@/types/supabase";
 
 type ProfilePost = Database["public"]["Tables"]["profile_posts"]["Row"];

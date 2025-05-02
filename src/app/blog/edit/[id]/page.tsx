@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { notFound } from "next/navigation";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,10 +26,11 @@ import {
 } from "@/components/ui/dialog";
 import TiptapEditor from "@/components/tiptap-editor";
 import FileUploader from "@/components/file-uploader";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { generateSlug } from "@/lib/utils";
+import { updatePost } from "@/lib/actions";
 
 interface PageProps {
   params: {
@@ -38,10 +39,10 @@ interface PageProps {
 }
 
 const formSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters long" }),
-  excerpt: z.string().optional(),
+  title: z.string().min(3).max(100),
+  excerpt: z.string().max(200).optional(),
   published: z.boolean().default(false),
-  coverImage: z.string().optional(),
+  coverImage: z.string().url().optional(),
 });
 
 export default function EditPostPage({ params }: PageProps) {
@@ -69,62 +70,30 @@ export default function EditPostPage({ params }: PageProps) {
   useEffect(() => {
     async function getPost() {
       try {
-        // Check if user is logged in
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+        const response = await fetch(`/api/posts/${id}`);
+        const post = await response.json();
         
-        if (userError || !userData.user) {
-          router.push("/auth/login");
-          return;
-        }
-
-        // Get post
-        const { data, error } = await supabase
-          .from("posts")
-          .select("*")
-          .eq("id", id)
-          .single();
-
-        if (error || !data) {
-          notFound();
-          return;
-        }
-
-        // Check if user is the post owner
-        if (data.user_id !== userData.user.id) {
+        if (!post) {
           router.push("/blog");
-          toast.error("You don't have permission to edit this post");
           return;
         }
 
-        setPost(data);
-        setContent(data.content);
-        
         form.reset({
-          title: data.title,
-          excerpt: data.excerpt || "",
-          published: data.published || false,
-          coverImage: data.cover_image || "",
+          title: post.title,
+          excerpt: post.excerpt || "",
+          published: post.published || false,
+          coverImage: post.cover_image || "",
         });
-
-        // Get post attachments
-        const { data: postAttachments } = await supabase
-          .from("attachments")
-          .select("*")
-          .eq("post_id", id);
-
-        if (postAttachments) {
-          setAttachments(postAttachments);
-        }
       } catch (error) {
         console.error("Error fetching post:", error);
-        notFound();
+        router.push("/blog");
       } finally {
         setIsLoading(false);
       }
     }
 
     getPost();
-  }, [id, router, supabase, form]);
+  }, [id, router, form]);
 
   const handleCoverImageUpload = (files: any[]) => {
     if (files.length > 0) {
@@ -139,41 +108,24 @@ export default function EditPostPage({ params }: PageProps) {
     }
   };
 
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
-
+    
     try {
-      // Generate slug from title if title changed
-      let slug = post.slug;
-      if (values.title !== post.title) {
-        slug = generateSlug(values.title);
-      }
-
-      // Update post
-      const { error: postError } = await supabase
-        .from("posts")
-        .update({
-          title: values.title,
-          content,
-          excerpt: values.excerpt || null,
-          slug,
-          published: values.published,
-          cover_image: values.coverImage || null,
-        })
-        .eq("id", id);
-
-      if (postError) {
-        throw postError;
-      }
-
-      toast.success("Post updated successfully");
-      router.push(`/blog/${slug || id}`);
+      const formData = new FormData();
+      formData.append('title', values.title);
+      formData.append('excerpt', values.excerpt || '');
+      formData.append('published', values.published.toString());
+      formData.append('coverImage', values.coverImage || '');
+      formData.append('content', JSON.stringify({ type: 'doc', content: [] }));
+      
+      await updatePost(id, formData);
     } catch (error: any) {
       toast.error(error.message || "Failed to update post");
     } finally {
       setIsSaving(false);
     }
-  };
+  }
 
   const handleAttachmentRequest = () => {
     setShowUploaderDialog(true);

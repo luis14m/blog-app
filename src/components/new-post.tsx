@@ -31,7 +31,7 @@ import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 
 import { toast } from "sonner";
 import FileUploader from "./file-uploader";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { createPost } from "@/services/postService";
 import { Checkbox } from "@/components/ui/checkbox";
 import type {Json } from '@/types/supabase';

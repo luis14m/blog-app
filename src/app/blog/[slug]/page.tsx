@@ -4,26 +4,30 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/utils/supabase/server";
 import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import { getPostBySlug } from "@/services/postService";
 import { getPostAttachments } from "@/services/attachmentService";
+import type { Database } from '@/types/supabase';
 
-interface PageProps {
+type Post = Database['public']['Tables']['posts']['Row'] & Database['public']['Tables']['profiles']['Row']
+
+type BlogParams = {
   params: {
-    slug: string;
-  };
+    slug: string
+  }
+  searchParams?: { [key: string]: string | string[] | undefined }
 }
 
-export default async function PostPage({ params }: PageProps) {
-  const supabase = await createClient();
-  const { slug } = params;
+export default async function BlogPage({ params }: BlogParams) {
+  // Esperar a que los parámetros estén disponibles
+  const { slug } = await params;
 
   // Try to get post by slug first
-  let post = await getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
  
   if (!post) {
@@ -34,6 +38,7 @@ export default async function PostPage({ params }: PageProps) {
   const attachments = await getPostAttachments(post.id);
   
   // Check if current user is the post owner
+  const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
   const isOwner = userData?.user?.id === post.user_id;
 
@@ -187,9 +192,7 @@ function getHTMLFromContent(content: any): string {
             levels: [1, 2, 3, 4, 5, 6],
           },
         }),
-      ], {
-        immediatelyRender: false // Fix for SSR hydration
-      });
+      ]);
     }
     
     return 'No content available';
@@ -203,4 +206,12 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return bytes + ' B';
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+export async function generateStaticParams() {
+  // Return an array of possible slug values
+  return [
+    { slug: 'post-1' },
+    { slug: 'post-2' }
+  ]
 }

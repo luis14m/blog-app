@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,11 +26,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { signUp } from "@/lib/actions";
+
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters" }),
-  confirmPassword: z.string()
+  email: z.string().email(),
+  password: z.string().min(6),
+  confirmPassword: z.string().min(6),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -39,7 +41,6 @@ const formSchema = z.object({
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  //const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -52,23 +53,13 @@ export default function SignUpPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const supabase = await createClient();
+    
     try {
-      const { error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      toast.success("Account created successfully");
-      router.push("/");
-      router.refresh();
+      const formData = new FormData();
+      formData.append('email', values.email);
+      formData.append('password', values.password);
+      
+      await signUp(formData);
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -102,7 +93,9 @@ export default function SignUpPage() {
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    {form.formState.errors.email && (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />
@@ -120,7 +113,9 @@ export default function SignUpPage() {
                         {...field}
                       />
                     </FormControl>
-                    <FormMessage />
+                    {form.formState.errors.password && (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />
@@ -139,7 +134,9 @@ export default function SignUpPage() {
                         {...field} 
                       />
                     </FormControl>
-                    <FormMessage />
+                    {form.formState.errors.confirmPassword && (
+                      <FormMessage />
+                    )}
                   </FormItem>
                 )}
               />

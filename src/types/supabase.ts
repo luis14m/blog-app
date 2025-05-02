@@ -113,21 +113,21 @@ export type Database = {
           id: string
           profile_id: string
           post_id: string
-          type: 'favorite' | 'bookmark' | 'read'
+          
           created_at: string
         }
         Insert: {
           id?: string
           profile_id: string
           post_id: string
-          type: 'favorite' | 'bookmark' | 'read'
+          
           created_at?: string
         }
         Update: {
           id?: string
           profile_id?: string
           post_id?: string
-          type?: 'favorite' | 'bookmark' | 'read'
+      
           created_at?: string
         }
       }

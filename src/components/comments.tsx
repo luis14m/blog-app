@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
@@ -8,24 +8,37 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import TiptapEditor from "@/components/tiptap-editor";
 import FileUploader from "@/components/file-uploader";
 import { formatDistanceToNow } from "date-fns";
-import { createClient } from "@/lib/supabase/client";
+import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ChevronDown } from "lucide-react";
+import { addComment } from "@/lib/actions";
+import { usePathname, useRouter } from "next/navigation";
 
 interface CommentsProps {
   postId: string;
 }
 
+// Número de comentarios a cargar por página
+const COMMENTS_PER_PAGE = 5;
+
 export default function Comments({ postId }: CommentsProps) {
   const [comments, setComments] = useState<any[]>([]);
-  const [commentContent, setCommentContent] = useState({});
+  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [commentsLoading, setCommentsLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [showUploaderDialog, setShowUploaderDialog] = useState(false);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const supabase = createClient();
+  const formRef = useRef<HTMLFormElement>(null);
+  const pathname = usePathname();
+  const router = useRouter();
 
+  // Obtener el usuario actual
   useEffect(() => {
     async function getUser() {
       const { data } = await supabase.auth.getUser();
@@ -46,45 +59,57 @@ export default function Comments({ postId }: CommentsProps) {
     };
   }, [supabase.auth]);
 
-  useEffect(() => {
-    async function getComments() {
-      const { data, error } = await supabase
+  // Función para cargar comentarios optimizada
+  const loadComments = useCallback(async (pageToLoad = 0, append = false) => {
+    try {
+      setLoadingMore(pageToLoad > 0);
+      
+      // Calcular el rango para paginación
+      const from = pageToLoad * COMMENTS_PER_PAGE;
+      const to = from + COMMENTS_PER_PAGE - 1;
+      
+      // Consulta de comentarios con sus perfiles y limitación
+      const { data, error, count } = await supabase
         .from("comments")
         .select(`
           *,
-          profiles:user_id(*)
-        `)
+          profiles:user_id(*),
+          attachments(*)
+        `, { count: 'exact' })
         .eq("post_id", postId)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(from, to);
 
       if (error) {
-        console.error("Error fetching comments:", error);
+        console.error("Error fetching comments:", error.message || JSON.stringify(error));
         return;
       }
 
-      // Get attachments for each comment
-      if (data) {
-        const commentsWithAttachments = await Promise.all(
-          data.map(async (comment) => {
-            const { data: attachments } = await supabase
-              .from("attachments")
-              .select("*")
-              .eq("comment_id", comment.id);
-            
-            return {
-              ...comment,
-              attachments: attachments || [],
-            };
-          })
-        );
-        
-        setComments(commentsWithAttachments);
+      // Verificar si hay más comentarios para cargar
+      setHasMore(count !== null && from + data.length < count);
+      
+      // Si hay datos, actualizar el estado
+      if (data && data.length > 0) {
+        setComments(prev => append ? [...prev, ...data] : data);
+        setPage(pageToLoad);
+      } else if (!append) {
+        // Si no hay datos y no es append, mostrar lista vacía
+        setComments([]);
       }
+    } catch (error: any) {
+      console.error("Error loading comments:", error.message || JSON.stringify(error));
+      toast.error(`Error al cargar los comentarios: ${error.message || "Error desconocido"}`);
+    } finally {
+      setCommentsLoading(false);
+      setLoadingMore(false);
     }
+  }, [postId, supabase]);
 
-    getComments();
-
-    // Set up realtime subscription for comments
+  // Cargar comentarios iniciales
+  useEffect(() => {
+    loadComments();
+    
+    // Suscripción a cambios en comentarios
     const commentsSubscription = supabase
       .channel("comments-changes")
       .on(
@@ -99,19 +124,19 @@ export default function Comments({ postId }: CommentsProps) {
           if (payload.eventType === "INSERT") {
             // Add new comment (will need to fetch user profile separately)
             const fetchNewComment = async () => {
-              const { data: profile } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("id", payload.new.user_id)
+              const { data: newComment } = await supabase
+                .from("comments")
+                .select(`
+                  *,
+                  profiles:user_id(*),
+                  attachments(*)
+                `)
+                .eq("id", payload.new.id)
                 .single();
               
-              const newComment = {
-                ...payload.new,
-                profiles: profile,
-                attachments: [],
-              };
-              
-              setComments((prev) => [newComment, ...prev]);
+              if (newComment) {
+                setComments((prev) => [newComment, ...prev]);
+              }
             };
             
             fetchNewComment();
@@ -128,53 +153,54 @@ export default function Comments({ postId }: CommentsProps) {
     return () => {
       supabase.removeChannel(commentsSubscription);
     };
-  }, [postId, supabase]);
+  }, [postId, supabase, loadComments]);
 
-  const handleSubmitComment = async () => {
+  // Cargar más comentarios
+  const handleLoadMore = useCallback(() => {
+    if (!hasMore || loadingMore) return;
+    loadComments(page + 1, true);
+  }, [loadComments, page, hasMore, loadingMore]);
+
+  const handleSubmitComment = async (formData: FormData) => {
     if (!user) {
-      toast.error("You must be logged in to comment");
+      toast.error("Debes iniciar sesión para comentar");
       return;
     }
 
     setIsSubmitting(true);
 
+    const localComment = {
+      id: `temp-${Date.now()}`,
+      content: content,
+      created_at: new Date().toISOString(),
+      profiles: {
+        display_name: user.user_metadata?.full_name || "",
+        username: user.user_metadata?.username || "",
+        avatar_url: user.user_metadata?.avatar_url || "",
+      },
+      attachments: [],
+    };
+
+    // Agregar comentario localmente
+    setComments((prev) => [localComment, ...prev]);
+    
     try {
-      // Create comment
-      const { data: comment, error: commentError } = await supabase
-        .from("comments")
-        .insert({
-          content: commentContent,
-          post_id: postId,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (commentError) {
-        throw commentError;
-      }
-
-      // Link attachments to comment
-      if (attachments.length > 0) {
-        const { error: attachmentError } = await supabase
-          .from("attachments")
-          .update({ comment_id: comment.id })
-          .in(
-            "id",
-            attachments.map((attachment) => attachment.id)
-          );
-
-        if (attachmentError) {
-          console.error("Error linking attachments:", attachmentError);
-        }
-      }
-
-      // Reset form
-      setCommentContent({});
+      await addComment(formData);
+      toast.success("Comentario agregado correctamente");
+      
+      // Limpiar el editor después de enviar
+      setContent("");
       setAttachments([]);
-      toast.success("Comment added successfully");
+      
+      // Reiniciar el formulario para asegurar que el editor se actualice correctamente
+      if (formRef.current) {
+        formRef.current.reset();
+      }
     } catch (error: any) {
-      toast.error(error.message || "Failed to add comment");
+      // Si hay error, eliminar el comentario local
+      setComments((prev) => prev.filter((c) => c.id !== localComment.id));
+      toast.error(error.message || "Error al agregar comentario");
+      console.error("Error al agregar comentario:", error.message || JSON.stringify(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -190,26 +216,20 @@ export default function Comments({ postId }: CommentsProps) {
   };
 
   const isValidComment = () => {
-    // Check if commentContent is not empty and has some text content
-    if (!commentContent || Object.keys(commentContent).length === 0) {
-      return false;
-    }
-    
-    try {
-      // Simple check - this might need to be more sophisticated
-      // depending on your editor's output format
-      return JSON.stringify(commentContent).length > 10;
-    } catch {
-      return false;
-    }
+    return content && content.length >= 5;
   };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Comments</h2>
+      <h2 className="text-2xl font-bold">Comentarios</h2>
       
       {!loading && user ? (
-        <div className="space-y-4">
+        <form
+          ref={formRef}
+          action={handleSubmitComment}
+          className="space-y-4"
+        >
+          <input type="hidden" name="postId" value={postId} />
           <div className="flex items-start gap-4">
             <Avatar className="h-10 w-10">
               <AvatarImage src={user.user_metadata?.avatar_url || ""} />
@@ -219,15 +239,18 @@ export default function Comments({ postId }: CommentsProps) {
             </Avatar>
             <div className="flex-1 space-y-4">
               <TiptapEditor
-                content={commentContent}
-                onChange={setCommentContent}
+                content={content}
+                onChange={setContent}
                 onAttachmentRequest={handleAttachmentRequest}
-                placeholder="Write a comment..."
+                placeholder="Escribe un comentario..."
+                immediatelyRender={false}
+                key={`editor-${comments.length}`}
               />
+              <input type="hidden" name="content" value={JSON.stringify(content)} />
               
               {attachments.length > 0 && (
                 <div className="space-y-2 border p-3 rounded-md">
-                  <h4 className="text-sm font-medium">Attachments</h4>
+                  <h4 className="text-sm font-medium">Archivos adjuntos</h4>
                   <div className="space-y-2">
                     {attachments.map((attachment) => (
                       <div
@@ -256,7 +279,7 @@ export default function Comments({ postId }: CommentsProps) {
                             setAttachments(attachments.filter((a) => a.id !== attachment.id));
                           }}
                         >
-                          Remove
+                          Eliminar
                         </Button>
                       </div>
                     ))}
@@ -266,42 +289,39 @@ export default function Comments({ postId }: CommentsProps) {
               
               <div className="flex justify-end gap-2">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAttachmentRequest}
-                >
-                  Attach Files
-                </Button>
-                <Button
-                  onClick={handleSubmitComment}
-                  disabled={isSubmitting || !isValidComment()}
+                  type="submit"
+                  disabled={!isValidComment() || isSubmitting}
                   size="sm"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Submitting...
+                      Enviando...
                     </>
                   ) : (
-                    "Submit"
+                    "Enviar"
                   )}
                 </Button>
               </div>
             </div>
           </div>
-        </div>
+        </form>
       ) : !loading ? (
         <div className="text-center p-6 border rounded-md bg-muted/30">
           <p className="text-muted-foreground mb-4">
-            You need to be logged in to leave a comment
+            Debes iniciar sesión para dejar un comentario
           </p>
           <Button asChild>
-            <a href="/auth/login">Log in</a>
+            <a href="/auth/login">Iniciar sesión</a>
           </Button>
         </div>
       ) : null}
 
-      {comments.length > 0 ? (
+      {commentsLoading ? (
+        <div className="flex justify-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : comments.length > 0 ? (
         <div className="space-y-6 mt-8">
           {comments.map((comment) => (
             <div key={comment.id} className="space-y-2">
@@ -309,7 +329,7 @@ export default function Comments({ postId }: CommentsProps) {
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={comment.profiles?.avatar_url || ""} />
                   <AvatarFallback>
-                    {(comment.profiles?.display_name || comment.profiles?.username || "User")
+                    {(comment.profiles?.display_name || comment.profiles?.username || "Usuario")
                       .charAt(0)
                       .toUpperCase()}
                   </AvatarFallback>
@@ -317,7 +337,7 @@ export default function Comments({ postId }: CommentsProps) {
                 <div className="flex-1 space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-medium">
-                      {comment.profiles?.display_name || comment.profiles?.username || "Anonymous"}
+                      {comment.profiles?.display_name || comment.profiles?.username || "Anónimo"}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
@@ -363,17 +383,35 @@ export default function Comments({ postId }: CommentsProps) {
               <Separator className="mt-4" />
             </div>
           ))}
+          
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button 
+                variant="outline" 
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                className="w-full"
+              >
+                {loadingMore ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ChevronDown className="mr-2 h-4 w-4" />
+                )}
+                Cargar más comentarios
+              </Button>
+            </div>
+          )}
         </div>
       ) : (
         <div className="text-center py-8 border rounded-md bg-muted/30">
-          <p className="text-muted-foreground">No comments yet. Be the first to comment!</p>
+          <p className="text-muted-foreground">No hay comentarios aún. ¡Sé el primero en comentar!</p>
         </div>
       )}
 
       {/* File uploader dialog */}
       <Dialog open={showUploaderDialog} onOpenChange={setShowUploaderDialog}>
         <DialogContent className="sm:max-w-md">
-          <DialogTitle>Add Attachments</DialogTitle>
+          <DialogTitle>Agregar archivos adjuntos</DialogTitle>
           <FileUploader
             onUploadComplete={handleUploadComplete}
             entityType="comment"
@@ -384,11 +422,7 @@ export default function Comments({ postId }: CommentsProps) {
   );
 }
 
-// Helper function to extract HTML from the content JSON
-// This is a simplified version - in a real app you'd use TipTap's 
-// generateHTML or a similar function to render the content properly
 function getHTMLFromContent(content: any): string {
-  // This is just a placeholder - in a real app, you'd parse the JSON content properly
   try {
     if (typeof content === 'string') {
       return content;
@@ -407,9 +441,9 @@ function getHTMLFromContent(content: any): string {
       }).join('');
     }
     
-    return 'No content available';
-  } catch (error) {
-    console.error('Error parsing content:', error);
-    return 'Error displaying content';
+    return 'No hay contenido disponible';
+  } catch (error: any) {
+    console.error('Error al parsear el contenido:', error.message || JSON.stringify(error));
+    return `Error al mostrar el contenido: ${error.message || 'Error desconocido'}`;
   }
 }
