@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { MoreHorizontal, PenSquare, Trash2, EyeIcon, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { deletePost } from "@/lib/actions";
+import { createClient } from "@/utils/supabase/client";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -36,27 +37,47 @@ export default function DashboardPage() {
   const [posts, setPosts] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const supabase = createClient();
 
   useEffect(() => {
     async function getUserContent() {
       try {
-        const userResponse = await fetch('/api/auth/user');
-        const { user } = await userResponse.json();
+        // Obtener usuario actual directamente de Supabase
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (!user) {
+        if (userError || !user) {
           router.push("/auth/login");
           return;
         }
 
-        // Get user posts
-        const postsResponse = await fetch(`/api/posts?user_id=${user.id}`);
-        const userPosts = await postsResponse.json();
-        setPosts(userPosts);
+        // Obtener posts del usuario directamente de Supabase
+        const { data: userPosts, error: postsError } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (postsError) {
+          throw postsError;
+        }
+        
+        setPosts(userPosts || []);
 
-        // Get user comments
-        const commentsResponse = await fetch(`/api/comments?user_id=${user.id}`);
-        const userComments = await commentsResponse.json();
-        setComments(userComments);
+        // Obtener comentarios del usuario directamente de Supabase
+        const { data: userComments, error: commentsError } = await supabase
+          .from('comments')
+          .select(`
+            *,
+            post:post_id(id, title, slug)
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (commentsError) {
+          throw commentsError;
+        }
+        
+        setComments(userComments || []);
       } catch (error) {
         console.error("Error fetching user content:", error);
         toast.error("Failed to load content");
@@ -66,7 +87,7 @@ export default function DashboardPage() {
     }
 
     getUserContent();
-  }, [router]);
+  }, [router, supabase]);
 
   const handleDeletePost = async (postId: string) => {
     setIsDeleting(postId);

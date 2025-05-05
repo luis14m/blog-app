@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/ui/mode-toggle";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -24,8 +24,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Loader2} from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { signOut } from "@/app/auth/login/actions";
+import { signOut } from "@/app/auth/actions";
+import { createClient } from '@/utils/supabase/client'
 
+const supabase = createClient()
 export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -33,25 +35,25 @@ export default function Navbar() {
 
   useEffect(() => {
     async function getUser() {
-      try {
-        const response = await fetch('/api/auth/user');
-        const contentType = response.headers.get('content-type');
-        if (contentType && contentType.includes('application/json')) {
-          const data = await response.json();
-          setUser(data?.user || null);
-        } else {
-          const text = await response.text();
-          console.error('Respuesta inesperada de /api/auth/user:', text);
-          setUser(null);
-        }
-      } catch (error) {
-        console.error('Error fetching user:', error);
-      } finally {
-        setLoading(false);
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) {
+        setUser(null);
+      } else {
+        setUser(user);
       }
+      setLoading(false);
     }
-
     getUser();
+  }, []);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user || null);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSignOut = async () => {
@@ -151,7 +153,7 @@ export default function Navbar() {
               </DropdownMenu>
             ) : (
               <Button asChild variant="ghost" size="sm">
-                <Link href="/auth/login">Sign in</Link>
+                <Link href="/auth/login">Login</Link>
               </Button>
             )}
             <ModeToggle />

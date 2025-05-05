@@ -2,25 +2,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
+import { getPosts } from "@/lib/actions";
 
 export default async function Home() {
+  
   const supabase = await createClient();
   
-  const { data: latestPosts } = await supabase
-    .from("posts")
-    .select(`
-      id,
-      title,
-      excerpt,
-      slug,
-      created_at,
-      cover_image,
-      user_id,
-      profiles(username, display_name, avatar_url)
-    `)
-    .eq("published", true)
-    .order("created_at", { ascending: false })
-    .limit(3);
+  const latestPosts  = await getPosts();
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">

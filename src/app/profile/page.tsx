@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { updateProfile } from "@/lib/actions";
+import { createClient } from "@/utils/supabase/client";
 
 const formSchema = z.object({
   username: z.string().min(3).max(20),
@@ -24,6 +25,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const router = useRouter();
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -39,17 +41,24 @@ export default function ProfilePage() {
   useEffect(() => {
     async function getUserProfile() {
       try {
-        const response = await fetch('/api/auth/user');
-        const { user } = await response.json();
+        // Obtener usuario actual directamente de Supabase
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
         
-        if (!user) {
+        if (userError || !user) {
           router.push("/auth/login");
           return;
         }
         
-        // Get user profile
-        const profileResponse = await fetch(`/api/profiles/${user.id}`);
-        const profileData = await profileResponse.json();
+        // Obtener perfil directamente de Supabase
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        if (profileError) {
+          throw profileError;
+        }
         
         form.reset({
           username: profileData.username || "",
@@ -67,7 +76,7 @@ export default function ProfilePage() {
     }
     
     getUserProfile();
-  }, [router, form]);
+  }, [router, form, supabase]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);

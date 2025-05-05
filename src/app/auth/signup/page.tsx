@@ -1,8 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/utils/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,28 +19,28 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Loader2, Mail, Lock, UserRound } from "lucide-react";
+import { toast, Toaster } from "sonner";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signUp } from "@/lib/actions";
-
+import { signup } from "../actions";
 
 const formSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  confirmPassword: z.string().min(6),
+  email: z.string().email({ message: "Email inválido" }),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
+  confirmPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
 }).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
 });
 
+type FormValues = z.infer<typeof formSchema>;
+
 export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-
-  const form = useForm<z.infer<typeof formSchema>>({
+  
+  const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
@@ -50,8 +48,8 @@ export default function SignUpPage() {
       confirmPassword: "",
     },
   });
-
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  
+  const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
     
     try {
@@ -59,26 +57,31 @@ export default function SignUpPage() {
       formData.append('email', values.email);
       formData.append('password', values.password);
       
-      await signUp(formData);
+      await signup(formData);
+      toast.success("¡Cuenta creada con éxito!");
     } catch (error: any) {
-      toast.error(error.message || "Failed to create account");
+      toast.error(error.message || "Error al crear la cuenta");
+      console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-8rem)] py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>
-            Enter your email and create a password to create your account.
+      <Toaster position="top-center" />
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl font-bold text-center">
+            Crear cuenta
+          </CardTitle>
+          <CardDescription className="text-center">
+            Ingresa tus datos para crear una nueva cuenta
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="email"
@@ -86,16 +89,18 @@ export default function SignUpPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="your@email.com" 
-                        type="email"
-                        autoComplete="email"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="tu@email.com" 
+                          type="email"
+                          autoComplete="email"
+                          className="pl-10"
+                          {...field} 
+                        />
+                      </div>
                     </FormControl>
-                    {form.formState.errors.email && (
-                      <FormMessage />
-                    )}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -104,69 +109,60 @@ export default function SignUpPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="••••••••" 
-                        type="password"
-                        autoComplete="new-password"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="••••••••" 
+                          type="password"
+                          autoComplete="new-password"
+                          className="pl-10"
+                          {...field} 
+                        />
+                      </div>
                     </FormControl>
-                    {form.formState.errors.password && (
-                      <FormMessage />
-                    )}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>Confirmar Contraseña</FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="••••••••" 
-                        type="password" 
-                        autoComplete="new-password"
-                        {...field} 
-                      />
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                          placeholder="••••••••" 
+                          type="password"
+                          autoComplete="new-password"
+                          className="pl-10"
+                          {...field} 
+                        />
+                      </div>
                     </FormControl>
-                    {form.formState.errors.confirmPassword && (
-                      <FormMessage />
-                    )}
+                    <FormMessage />
                   </FormItem>
                 )}
               />
               <Button 
                 type="submit" 
-                className="w-full"
+                className="w-full mt-6" 
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Creating account...
-                  </>
-                ) : (
-                  "Create account"
-                )}
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Crear cuenta
               </Button>
             </form>
           </Form>
         </CardContent>
-        <CardFooter>
-          <p className="text-sm text-center text-muted-foreground w-full">
-            Tienes una cuenta?{" "}
-            <Link
-              href="/auth/login"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Iniciar sesión
-            </Link>
-          </p>
+        <CardFooter className="flex flex-col space-y-4 border-t pt-6">
+          <div className="text-sm text-center">
+            <span>¿Ya tienes cuenta? <Link href="/auth/login" className="text-primary hover:underline">Iniciar sesión</Link></span>
+          </div>
         </CardFooter>
       </Card>
     </div>

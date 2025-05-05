@@ -70,10 +70,15 @@ export default function EditPostPage({ params }: PageProps) {
   useEffect(() => {
     async function getPost() {
       try {
-        const response = await fetch(`/api/posts/${id}`);
-        const post = await response.json();
+        // Obtener post directamente de Supabase
+        const { data: post, error } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('id', id)
+          .single();
         
-        if (!post) {
+        if (error || !post) {
+          console.error("Error fetching post:", error);
           router.push("/blog");
           return;
         }
@@ -84,6 +89,11 @@ export default function EditPostPage({ params }: PageProps) {
           published: post.published || false,
           coverImage: post.cover_image || "",
         });
+        
+        // Establecer el contenido del editor
+        if (post.content) {
+          setContent(post.content);
+        }
       } catch (error) {
         console.error("Error fetching post:", error);
         router.push("/blog");
@@ -93,7 +103,7 @@ export default function EditPostPage({ params }: PageProps) {
     }
 
     getPost();
-  }, [id, router, form]);
+  }, [id, router, form, supabase]);
 
   const handleCoverImageUpload = (files: any[]) => {
     if (files.length > 0) {
