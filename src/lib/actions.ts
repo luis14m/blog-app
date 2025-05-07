@@ -24,6 +24,25 @@ export async function getPosts() {
   return posts
 }
 
+export async function getPostsLimit(limit: number) {
+  const supabase = await createClient()
+  const { data: posts, error } = await supabase
+  .from("posts")
+  .select(` 
+    id,
+    title,
+    excerpt,
+    slug,
+    created_at,
+    cover_image,
+    user_id,  
+  `)
+  .eq("published", true)
+  .order("created_at", { ascending: false })
+  .limit(limit)
+  return posts
+}
+
 export async function createPost(formData: FormData) {
   const title = formData.get('title') as string
   const content = formData.get('content') as string
@@ -189,6 +208,7 @@ export async function updateProfile(formData: FormData) {
     .eq('id', userId)
 
   if (updateError) {
+    console.log(updateError)
     throw updateError
   }
 

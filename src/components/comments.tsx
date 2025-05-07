@@ -68,29 +68,46 @@ export default function Comments({ postId }: CommentsProps) {
       const from = pageToLoad * COMMENTS_PER_PAGE;
       const to = from + COMMENTS_PER_PAGE - 1;
       
-      // Consulta de comentarios con sus perfiles y limitación
-      const { data, error, count } = await supabase
+      // Primero obtener los comentarios
+      const { data: comments, error: commentsError, count } = await supabase
         .from("comments")
         .select(`
           *,
-          profiles:user_id(*),
-          attachments(*)
+          profiles:user_id(*)
         `, { count: 'exact' })
         .eq("post_id", postId)
         .order("created_at", { ascending: false })
         .range(from, to);
 
-      if (error) {
-        console.error("Error fetching comments:", error.message || JSON.stringify(error));
+      if (commentsError) {
+        console.error("Error fetching comments:", commentsError.message || JSON.stringify(commentsError));
         return;
       }
 
-      // Verificar si hay más comentarios para cargar
-      setHasMore(count !== null && from + data.length < count);
-      
-      // Si hay datos, actualizar el estado
-      if (data && data.length > 0) {
-        setComments(prev => append ? [...prev, ...data] : data);
+      // Luego obtener los archivos adjuntos para cada comentario
+      if (comments && comments.length > 0) {
+        const commentIds = comments.map(comment => comment.id);
+        const { data: attachments, error: attachmentsError } = await supabase
+          .from("attachments")
+          .select("*")
+          .in("comment_id", commentIds);
+
+        if (attachmentsError) {
+          console.error("Error fetching attachments:", attachmentsError.message || JSON.stringify(attachmentsError));
+          return;
+        }
+
+        // Combinar los comentarios con sus archivos adjuntos
+        const commentsWithAttachments = comments.map(comment => ({
+          ...comment,
+          attachments: attachments?.filter(attachment => attachment.comment_id === comment.id) || []
+        }));
+
+        // Verificar si hay más comentarios para cargar
+        setHasMore(count !== null && from + commentsWithAttachments.length < count);
+        
+        // Actualizar el estado
+        setComments(prev => append ? [...prev, ...commentsWithAttachments] : commentsWithAttachments);
         setPage(pageToLoad);
       } else if (!append) {
         // Si no hay datos y no es append, mostrar lista vacía
@@ -124,18 +141,40 @@ export default function Comments({ postId }: CommentsProps) {
           if (payload.eventType === "INSERT") {
             // Add new comment (will need to fetch user profile separately)
             const fetchNewComment = async () => {
-              const { data: newComment } = await supabase
+              // Obtener el comentario con su perfil
+              const { data: comment, error: commentError } = await supabase
                 .from("comments")
                 .select(`
                   *,
-                  profiles:user_id(*),
-                  attachments(*)
+                  profiles:user_id(*)
                 `)
                 .eq("id", payload.new.id)
                 .single();
               
-              if (newComment) {
-                setComments((prev) => [newComment, ...prev]);
+              if (commentError) {
+                console.error("Error fetching new comment:", commentError.message || JSON.stringify(commentError));
+                return;
+              }
+
+              // Obtener los archivos adjuntos del comentario
+              const { data: attachments, error: attachmentsError } = await supabase
+                .from("attachments")
+                .select("*")
+                .eq("comment_id", payload.new.id);
+
+              if (attachmentsError) {
+                console.error("Error fetching attachments:", attachmentsError.message || JSON.stringify(attachmentsError));
+                return;
+              }
+
+              // Combinar el comentario con sus archivos adjuntos
+              const commentWithAttachments = {
+                ...comment,
+                attachments: attachments || []
+              };
+              
+              if (commentWithAttachments) {
+                setComments((prev) => [commentWithAttachments, ...prev]);
               }
             };
             

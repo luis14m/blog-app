@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
-import { getPosts } from "@/lib/actions";
+import { getPostsLimit } from "@/lib/actions";
 
 export default async function Home() {
   
   const supabase = await createClient();
   
-  const latestPosts  = await getPosts();
+  const latestPosts  = await getPostsLimit(3);
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)]">

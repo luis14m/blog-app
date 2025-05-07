@@ -49,7 +49,29 @@ export default function TiptapEditor({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        bulletList: {
+          HTMLAttributes: {
+            class: 'list-disc ml-4',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'list-decimal ml-4',
+          },
+        },
+        heading: {
+          levels: [1, 2],
+          HTMLAttributes: {
+            class: 'font-bold',
+          },
+        },
+        blockquote: {
+          HTMLAttributes: {
+            class: 'border-l-4 border-muted-foreground pl-4 italic',
+          },
+        },
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -100,6 +122,35 @@ export default function TiptapEditor({
 
   return (
     <div className="border rounded-md">
+      <style jsx global>{`
+        .ProseMirror ul {
+          list-style-type: disc;
+          padding-left: 1.5rem;
+        }
+        .ProseMirror ol {
+          list-style-type: decimal;
+          padding-left: 1.5rem;
+        }
+        .ProseMirror li {
+          margin: 0.25rem 0;
+        }
+        .ProseMirror h1 {
+          font-size: 2em;
+          font-weight: bold;
+          margin: 1em 0 0.5em;
+        }
+        .ProseMirror h2 {
+          font-size: 1.5em;
+          font-weight: bold;
+          margin: 1em 0 0.5em;
+        }
+        .ProseMirror blockquote {
+          border-left: 4px solid var(--muted-foreground);
+          padding-left: 1rem;
+          font-style: italic;
+          margin: 1em 0;
+        }
+      `}</style>
       <div className="flex flex-wrap items-center gap-1 p-1 border-b bg-muted/50">
         <Toggle
           size="sm"

@@ -2,11 +2,11 @@ import { createClient } from "@/utils/supabase/server";
 import { Database } from "@/types/supabase";
 
 type ProfilePost = Database["public"]["Tables"]["profile_posts"]["Row"];
-type ProfilePostType = ProfilePost["type"];
+//type ProfilePostType = ProfilePost["type"];
 
 export async function getProfilePostsByType(
   profileId: string,
-  type: ProfilePostType
+ 
 ): Promise<ProfilePost[]> {
   const supabase = await createClient();
 
@@ -14,7 +14,7 @@ export async function getProfilePostsByType(
     .from("profile_posts")
     .select("*")
     .eq("profile_id", profileId)
-    .eq("type", type)
+    
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -33,17 +33,17 @@ export async function getPostInteractions(postId: string): Promise<{
       .from("profile_posts")
       .select("id", { count: "exact" })
       .eq("post_id", postId)
-      .eq("type", "favorite"),
+      
     supabase
       .from("profile_posts")
       .select("id", { count: "exact" })
       .eq("post_id", postId)
-      .eq("type", "bookmark"),
+      
     supabase
       .from("profile_posts")
       .select("id", { count: "exact" })
       .eq("post_id", postId)
-      .eq("type", "read"),
+      
   ]);
 
   return {

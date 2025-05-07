@@ -29,3 +29,21 @@ export async function updateProfile(userId: string, profile: Partial<Profile>): 
   if (error) throw error;
   return data;
 }
+
+export async function createProfile(userId: string, email: string): Promise<Profile> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .insert({
+      id: userId,
+      username: email,
+      display_name: email.split('@')[0],
+      avatar_url: null
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}

@@ -66,18 +66,31 @@ export default function DashboardPage() {
         // Obtener comentarios del usuario directamente de Supabase
         const { data: userComments, error: commentsError } = await supabase
           .from('comments')
-          .select(`
-            *,
-            post:post_id(id, title, slug)
-          `)
+          .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
           
         if (commentsError) {
           throw commentsError;
         }
+
+        // Obtener los detalles de los posts para cada comentario
+        const commentsWithPosts = await Promise.all(
+          (userComments || []).map(async (comment) => {
+            const { data: postData } = await supabase
+              .from('posts')
+              .select('id, title, slug')
+              .eq('id', comment.post_id)
+              .single();
+            
+            return {
+              ...comment,
+              post: postData
+            };
+          })
+        );
         
-        setComments(userComments || []);
+        setComments(commentsWithPosts);
       } catch (error) {
         console.error("Error fetching user content:", error);
         toast.error("Failed to load content");

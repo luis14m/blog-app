@@ -36,14 +36,24 @@ export async function createPost(
 export async function getPublishedPosts(): Promise<Post[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("posts")
-    .select("*")
-    .eq("published", true)
-    .order("created_at", { ascending: false });
+  const { data: posts, error } = await supabase
+  .from("posts")
+  .select(`
+    id,
+    title,
+    excerpt,
+    slug,
+    created_at,
+    cover_image,
+    user_id,
+    profiles(username, display_name, avatar_url)
+  `)
+  .eq("published", true)
+  .order("created_at", { ascending: false })
+
 
   if (error) throw error;
-  return data || [];
+  return posts;
 }
 
 export async function getPostBySlug(slug: string): Promise<Post | null> {

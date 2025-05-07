@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ui/mode-toggle";
@@ -32,6 +32,7 @@ export default function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     async function getUser() {
@@ -59,6 +60,9 @@ export default function Navbar() {
   const handleSignOut = async () => {
     try {
       await signOut();
+      router.push('/');
+      router.refresh();
+     
     } catch (error) {
       console.error('Error signing out:', error);
     }

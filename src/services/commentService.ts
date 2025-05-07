@@ -18,7 +18,7 @@ export async function getPostComments(postId: string): Promise<Comment[]> {
         display_name,
         avatar_url
       ),
-      attachments (*)
+      attachments!comment_id(*)
     `)
     .eq("post_id", postId)
     .order("created_at", { ascending: false });
@@ -47,7 +47,8 @@ export async function createComment(
         username,
         display_name,
         avatar_url
-      )
+      ),
+      attachments!comment_id(*)
     `)
     .single();
 

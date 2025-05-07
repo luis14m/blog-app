@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { login, signup } from '../actions';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast, Toaster } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter , redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -45,6 +46,15 @@ export default function LoginPage() {
       password: "",
     },
   });
+  
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        redirect('/profile'); // 
+      }
+    });
+  }, [router]);
   
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);

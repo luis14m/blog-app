@@ -192,6 +192,8 @@ AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION handle_new_user();
 
+---------------------------------------------------------------------------------------------------
+
 -- Create profile_posts table
 CREATE TABLE IF NOT EXISTS public.profile_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -14,11 +14,11 @@ import { updateProfile } from "@/lib/actions";
 import { createClient } from "@/utils/supabase/client";
 
 const formSchema = z.object({
-  username: z.string().min(3).max(20),
+  username: z.string().min(5).max(50),
   displayName: z.string().min(2).max(50),
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.string().url().optional().or(z.literal('')),
   bio: z.string().max(160).optional(),
-  website: z.string().url().optional(),
+  website: z.string().url().optional().or(z.literal('')),
 });
 
 export default function ProfilePage() {
@@ -180,7 +180,7 @@ export default function ProfilePage() {
         </div>
 
         <Button type="submit" className="w-full" disabled={isSaving}>
-          {isSaving ? "Saving..." : "Save changes"}
+          {isSaving ? "Guardando..." : "Guardar cambios"}
         </Button>
       </form>
     </div>
