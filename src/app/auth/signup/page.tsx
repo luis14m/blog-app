@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Loader2, Mail, Lock, UserRound } from "lucide-react";
-import { toast, Toaster } from "sonner";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -58,9 +57,9 @@ export default function SignUpPage() {
       formData.append('password', values.password);
       
       await signup(formData);
-      toast.success("¡Cuenta creada con éxito!");
+      console.log("¡Cuenta creada con éxito!");
     } catch (error: any) {
-      toast.error(error.message || "Error al crear la cuenta");
+      console.error(error.message || "Error al crear la cuenta");
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -69,7 +68,6 @@ export default function SignUpPage() {
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-8rem)] py-12">
-      <Toaster position="top-center" />
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">

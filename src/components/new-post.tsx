@@ -29,13 +29,11 @@ import {
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 
-import { toast } from "sonner";
 import FileUploader from "./file-uploader";
 import { createClient } from "@/utils/supabase/client";
-import { createPost } from "@/services/postService";
 import { Checkbox } from "@/components/ui/checkbox";
-import type {Json } from '@/types/supabase';
-
+import type { Json } from '@/types/supabase';
+import { createPost } from "@/lib/actions/server";
 
 
 const formSchema = z.object({
@@ -76,7 +74,7 @@ export function NewPostSheet() {
 
       if (data?.publicUrl) {
         form.setValue("coverImage", data.publicUrl);
-        toast.success("Cover image uploaded successfully");
+        console.log("Cover image uploaded successfully");
         setCoverImageUploadOpen(false);
       }
     }
@@ -117,10 +115,10 @@ export function NewPostSheet() {
         }
       }
 
-      toast.success("Post created successfully");
+      console.log("Post created successfully");
       router.push('/blog');
     } catch (error: any) {
-      toast.error(error.message || "Failed to create post");
+      console.error(error.message || "Failed to create post");
     } finally {
       setIsLoading(false);
     }
@@ -330,7 +328,7 @@ export function NewPostSheet() {
               </Button>
             </SheetClose>
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Post"}
+              {isLoading ? "Creando..." : "Crear Post"}
             </Button>
             
           </div>

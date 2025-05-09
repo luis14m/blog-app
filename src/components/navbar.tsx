@@ -28,7 +28,7 @@ import { signOut } from "@/app/auth/actions";
 import { createClient } from '@/utils/supabase/client'
 
 const supabase = createClient()
-export default function Navbar() {
+export function Navbar() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();

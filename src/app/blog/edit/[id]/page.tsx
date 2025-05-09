@@ -27,10 +27,11 @@ import {
 import TiptapEditor from "@/components/tiptap-editor";
 import FileUploader from "@/components/file-uploader";
 import { createClient } from "@/utils/supabase/client";
-import { toast } from "sonner";
+import { toast } from "sonner"
+
 import { Loader2 } from "lucide-react";
 import { generateSlug } from "@/lib/utils";
-import { updatePost } from "@/lib/actions";
+import { updatePost } from "@/lib/actions/server";
 
 interface PageProps {
   params: {

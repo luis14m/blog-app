@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { X, FileIcon, Image, File, UploadCloud } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { toast } from "sonner";
 
 interface FileUploaderProps {
   onUploadComplete: (files: {
@@ -51,7 +50,7 @@ export default function FileUploader({
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (files.length + acceptedFiles.length > maxFiles) {
-        toast.error(`You can only upload up to ${maxFiles} files`);
+        console.error(`You can only upload up to ${maxFiles} files`);
         return;
       }
 
@@ -88,7 +87,7 @@ export default function FileUploader({
     const user = await supabase.auth.getUser();
 
     if (!user.data.user) {
-      toast.error("You must be logged in to upload files");
+      console.error("You must be logged in to upload files");
       return;
     }
 
@@ -125,12 +124,12 @@ export default function FileUploader({
           progress: 100,
           path,
         };
-      } catch (error) {
-        console.error("Upload error:", error);
+      } catch (error: any) {
+        console.error("Upload error:", error?.message || JSON.stringify(error));
         return {
           ...fileObj,
           uploading: false,
-          error: "Upload failed",
+          error: error?.message || "Error de carga desconocido",
           progress: 0,
         };
       }
@@ -169,11 +168,11 @@ export default function FileUploader({
         );
 
         onUploadComplete(attachments);
-        toast.success(`${successfulUploads.length} file(s) uploaded successfully`);
+        console.log(`${successfulUploads.length} file(s) uploaded successfully`);
       }
     } catch (error) {
       console.error("Error processing uploads:", error);
-      toast.error("An error occurred during upload");
+      console.error("An error occurred during upload");
     }
   };
 

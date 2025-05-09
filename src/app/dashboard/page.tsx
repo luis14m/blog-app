@@ -25,10 +25,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
 import { MoreHorizontal, PenSquare, Trash2, EyeIcon, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { deletePost } from "@/lib/actions";
+import { deletePost } from "@/lib/actions/server";
 import { createClient } from "@/utils/supabase/client";
 
 export default function DashboardPage() {
@@ -93,7 +92,7 @@ export default function DashboardPage() {
         setComments(commentsWithPosts);
       } catch (error) {
         console.error("Error fetching user content:", error);
-        toast.error("Failed to load content");
+        console.error("Failed to load content");
       } finally {
         setLoading(false);
       }
@@ -108,9 +107,9 @@ export default function DashboardPage() {
     try {
       await deletePost(postId);
       setPosts(posts.filter(post => post.id !== postId));
-      toast.success("Post deleted successfully");
+      console.log("Post deleted successfully");
     } catch (error: any) {
-      toast.error(error.message || "Failed to delete post");
+      console.error(error.message || "Failed to delete post");
     } finally {
       setIsDeleting(null);
     }

@@ -2,9 +2,10 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/toaster";
-import Navbar from "@/components/navbar";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
 import { cn } from "@/lib/utils";
+import { Toaster } from "@/components/ui/sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,29 +20,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <body className={cn(inter.className, "min-h-screen bg-background antialiased")}>
-      <main className="relative px-10 py-6 lg:gap-10 lg:px-8 lg:py-8 xl:grid">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col">
+          <div className="flex flex-col min-h-screen">
             <Navbar />
-            <main className="flex-1">{children}</main>
-            <footer className="border-t py-6 md:py-0">
-              <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
-                <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-                  Built with Next.js, Supabase, and shadcn/ui.
-                </p>
-              </div>
-            </footer>
+            <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
+              {children}
+            </main>
+            
           </div>
           <Toaster />
+          <Footer />
         </ThemeProvider>
-        </main>
+        
       </body>
     </html>
   );

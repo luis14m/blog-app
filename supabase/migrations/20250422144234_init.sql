@@ -177,7 +177,9 @@ FOR EACH ROW
 EXECUTE FUNCTION update_updated_at();
 
 -- Create a function to handle user profile creation on signup
-CREATE OR REPLACE FUNCTION handle_new_user()
+--- NOT WORKING
+
+/* CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO profiles (id, username, display_name, avatar_url)
@@ -191,15 +193,15 @@ CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION handle_new_user();
-
----------------------------------------------------------------------------------------------------
+ */
+------------------------------------------------------------------------------------
 
 -- Create profile_posts table
 CREATE TABLE IF NOT EXISTS public.profile_posts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   profile_id uuid REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   post_id uuid REFERENCES posts(id) ON DELETE CASCADE NOT NULL,
- created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   UNIQUE(profile_id, post_id)
 );
 

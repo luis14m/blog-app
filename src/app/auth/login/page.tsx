@@ -24,7 +24,6 @@ import { Loader2, Mail, Lock } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { toast, Toaster } from "sonner";
 import { useRouter , redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
@@ -37,6 +36,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   
   const form = useForm<FormValues>({
@@ -51,13 +51,14 @@ export default function LoginPage() {
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        redirect('/profile'); // 
+        router.push('/profile'); // Usar router.push en lugar de redirect
       }
     });
   }, [router]);
   
   const onSubmit = async (values: FormValues) => {
     setIsLoading(true);
+    setError(null);
     
     try {
       const formData = new FormData();
@@ -65,8 +66,10 @@ export default function LoginPage() {
       formData.append('password', values.password);
       
       await login(formData);
+      // Si llegamos aquí sin redirección, redirigimos manualmente
+      router.push('/');
     } catch (error: any) {
-      toast.error(error.message || "Error de autenticación");
+      setError(error.message || "Error de autenticación");
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
@@ -75,7 +78,6 @@ export default function LoginPage() {
 
   return (
     <div className="container flex items-center justify-center min-h-[calc(100vh-8rem)] py-12">
-      <Toaster position="top-center" />
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold text-center">
@@ -86,6 +88,11 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField

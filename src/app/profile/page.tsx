@@ -9,8 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { updateProfile } from "@/lib/actions";
+import { updateProfile } from "@/lib/actions/server";
 import { createClient } from "@/utils/supabase/client";
 
 const formSchema = z.object({
@@ -69,7 +68,7 @@ export default function ProfilePage() {
         });
       } catch (error) {
         console.error("Error loading profile:", error);
-        toast.error("Failed to load profile");
+        console.error("Failed to load profile");
       } finally {
         setLoading(false);
       }
@@ -90,9 +89,9 @@ export default function ProfilePage() {
       formData.append('website', values.website || '');
       
       await updateProfile(formData);
-      toast.success("Profile updated successfully");
+      console.log("Profile updated successfully");
     } catch (error: any) {
-      toast.error(error.message || "Failed to update profile");
+      console.error(error.message || "Failed to update profile");
     } finally {
       setIsSaving(false);
     }

@@ -9,11 +9,13 @@ import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
-import { getPostBySlug } from "@/services/postService";
-import { getPostAttachments } from "@/services/attachmentService";
+import { getPostBySlug } from "@/lib/actions/client";
+import { getPostAttachments } from "@/lib/actions/client";
 import type { Database } from '@/types/supabase';
 
-type Post = Database['public']['Tables']['posts']['Row'] & Database['public']['Tables']['profiles']['Row']
+type Post = Database['public']['Tables']['posts']['Row'] & {
+  profiles?: Database['public']['Tables']['profiles']['Row'] | null;
+}
 
 type BlogParams = {
   params: {

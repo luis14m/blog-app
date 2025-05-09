@@ -1,16 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenSquare } from "lucide-react";
-import { getPublishedPosts } from "@/services/postService";
-
+import { getPublishedPosts } from "@/lib/actions/client";
 import {
   Sheet,
   
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { NewPostSheet } from "@/components/new-post";
+
 
 export default async function BlogPage() {
   try {
@@ -104,14 +102,10 @@ export default async function BlogPage() {
       </div>
     );
   } catch (error) {
-    console.error("Error fetching posts:", error);
+    console.error('Error al cargar los posts:', error);
     return (
-      <div className="container py-8">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Error loading posts. Please try again later.
-          </p>
-        </div>
+      <div className="container mx-auto px-4">
+        <h1>Lo sentimos, hubo un error al cargar los posts</h1>
       </div>
     );
   }

@@ -4,10 +4,13 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 import { createClient } from '@/utils/supabase/server'
-import { createProfile } from '@/services/profileService'
+import { createProfile } from '@/lib/actions/server'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
+
+  // Obtener la URL de origen si existe
+  const redirectTo = formData.get('redirectTo') as string || '/'
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
@@ -23,11 +26,15 @@ export async function login(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  // Redirigir al usuario a la página de origen
+  redirect(redirectTo)
 }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
+
+  // Obtener la URL de origen si existe
+  const redirectTo = formData.get('redirectTo') as string || '/'
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
@@ -52,7 +59,8 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/')
+  // Redirigir al usuario a la página de origen
+  redirect(redirectTo)
 }
 
 export async function signOut() {
