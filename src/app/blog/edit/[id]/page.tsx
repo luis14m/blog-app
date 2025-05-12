@@ -238,11 +238,10 @@ export default function EditPostPage(props: PageProps) {
           <div className="space-y-2">
             <FormLabel>Content</FormLabel>
             <TiptapEditor 
-              content={content} 
+              content={content}
               onChange={setContent}
               onAttachmentRequest={handleAttachmentRequest}
-              editorClass="min-h-[300px]"
-            />
+              editorClass="min-h-[300px]" immediatelyRender={false}            />
           </div>
 
           <div className="space-y-2">
