@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,9 +33,9 @@ import { Loader2 } from "lucide-react";
 import { updatePost } from "@/lib/actions/server";
 
 interface PageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 const formSchema = z.object({
@@ -45,7 +45,8 @@ const formSchema = z.object({
   coverImage: z.string().url().optional(),
 });
 
-export default function EditPostPage({ params }: PageProps) {
+export default function EditPostPage(props: PageProps) {
+  const params = use(props.params);
   const { id } = params;
   const router = useRouter();
   const [post, setPost] = useState<any>(null);

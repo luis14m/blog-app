@@ -20,7 +20,8 @@ type Post = Database['public']['Tables']['posts']['Row'] & {
 };
 
 
-export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+export default async function BlogPostPage(props: { params: Promise<{ slug: string }> }) {
+  const params = await props.params;
   // ...existing code...
   const { slug } = params;
   // ...existing code...
@@ -28,14 +29,14 @@ export default async function BlogPostPage({ params }: { params: { slug: string 
   // Try to get post by slug first
   const post = await getPostBySlug(slug);
 
- 
+
   if (!post) {
     notFound();
   }
 
   // Get post attachments
   const attachments = await getPostAttachments(post.id);
-  
+
   // Check if current user is the post owner
   const supabase = await createClient();
   const { data: userData } = await supabase.auth.getUser();
