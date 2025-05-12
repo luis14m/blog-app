@@ -1,3 +1,5 @@
+
+import * as React from 'react'
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -17,15 +19,11 @@ type Post = Database['public']['Tables']['posts']['Row'] & {
   profiles?: Database['public']['Tables']['profiles']['Row'] | null;
 };
 
-interface PageProps {
-  params: {
-    slug: string;
-  };
-}
 
-export default async function BlogPostPage({ params }: PageProps) {
-
-  const {slug} = await params;
+export default async function BlogPostPage({ params }: { params: { slug: string } }) {
+  // ...existing code...
+  const { slug } = params;
+  // ...existing code...
 
   // Try to get post by slug first
   const post = await getPostBySlug(slug);
@@ -209,10 +207,3 @@ function formatFileSize(bytes: number): string {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-export async function generateStaticParams() {
-  // Return an array of possible slug values
-  return [
-    { slug: 'post-1' },
-    { slug: 'post-2' }
-  ]
-}

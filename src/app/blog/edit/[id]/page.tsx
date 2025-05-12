@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { notFound } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -30,7 +29,7 @@ import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner"
 
 import { Loader2 } from "lucide-react";
-import { generateSlug } from "@/lib/utils";
+
 import { updatePost } from "@/lib/actions/server";
 
 interface PageProps {
