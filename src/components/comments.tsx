@@ -201,39 +201,8 @@ export default function Comments({ postId }: CommentsProps) {
           invalidateCache();
           
           if (payload.eventType === "INSERT") {
-            // Add new comment (will need to fetch user profile separately)
             const fetchNewComment = async () => {
-              // Obtener el comentario con su perfil
-              const { data: comment, error: commentError } = await supabase
-                .from("comments")
-                .select(`
-                  *,
-                  profiles:user_id(*)
-                `)
-                .eq("id", payload.new.id)
-                .single();
-              
-              if (commentError) {
-                console.error("Error fetching new comment:", commentError.message || JSON.stringify(commentError));
-                return;
-              }
-
-              // Obtener los archivos adjuntos del comentario
-              const { data: attachments, error: attachmentsError } = await supabase
-                .from("attachments")
-                .select("*")
-                .eq("comment_id", payload.new.id);
-
-              if (attachmentsError) {
-                console.error("Error fetching attachments:", attachmentsError.message || JSON.stringify(attachmentsError));
-                return;
-              }
-
-              // Combinar el comentario con sus archivos adjuntos
-              const commentWithAttachments = {
-                ...comment,
-                attachments: attachments || []
-              };
+              const commentWithAttachments = await getNewCommentWithAttachments(payload.new.id);
               
               if (commentWithAttachments) {
                 setComments((prev) => [commentWithAttachments as CommentType, ...prev]);

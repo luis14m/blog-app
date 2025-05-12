@@ -26,34 +26,51 @@ import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from '@/utils/supabase/client'
+import { Database } from "@/types/supabase";
+import { getUserAndProfile } from '@/lib/actions/client';
 
 const supabase = createClient()
 export function Navbar() {
-  const [user, setUser] = useState<any>(null);
+  const [userWithProfile, setUserWithProfile] = useState<{
+    user: any;
+    profile: Database["public"]["Tables"]["profiles"]["Row"] | null;
+  }>({ user: null, profile: null });
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    async function getUser() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error) {
-        setUser(null);
-      } else {
-        setUser(user);
+    async function loadUserAndProfile() {
+      try {
+        // Obtener la sesión actual primero
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          const result = await getUserAndProfile();
+          setUserWithProfile(result);
+        } else {
+          setUserWithProfile({ user: null, profile: null });
+        }
+      } catch (error) {
+        console.error('Error loading user and profile:', error);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
-    getUser();
-  }, []);
-
-  useEffect(() => {
+    
+    loadUserAndProfile();
+  
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user || null);
+      async (_event, session) => {
+        if (session) {
+          const result = await getUserAndProfile();
+          setUserWithProfile(result);
+        } else {
+          setUserWithProfile({ user: null, profile: null });
+        }
       }
     );
-
+  
     return () => subscription.unsubscribe();
   }, []);
 
@@ -109,7 +126,7 @@ export function Navbar() {
             
             {loading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
-            ) : user ? (
+            ) : userWithProfile.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -118,11 +135,19 @@ export function Navbar() {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={user.user_metadata?.avatar_url}
-                        alt={user.email}
+                        src={userWithProfile.profile?.avatar_url || 
+                             userWithProfile.user.user_metadata?.avatar_url}
+                        alt={userWithProfile.profile?.display_name || 
+                             userWithProfile.user.email}
+                        loading="eager"
+                        onError={(e) => {
+                          const img = e.currentTarget;
+                          img.src = userWithProfile.user.user_metadata?.avatar_url || '';
+                        }}
                       />
                       <AvatarFallback>
-                        {user.email?.charAt(0).toUpperCase()}
+                        {(userWithProfile.profile?.display_name?.[0] || 
+                          userWithProfile.user.email?.[0])?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -131,10 +156,12 @@ export function Navbar() {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user.user_metadata?.full_name || user.email}
+                        {userWithProfile.profile?.display_name || 
+                         userWithProfile.user.user_metadata?.full_name || 
+                         userWithProfile.user.email}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user.email}
+                        {userWithProfile.user.email}
                       </p>
                     </div>
                   </DropdownMenuLabel>

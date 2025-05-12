@@ -12,12 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,10 +20,49 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, PenSquare, Trash2, EyeIcon, Loader2 } from "lucide-react";
+import {
+  MoreHorizontal,
+  PenSquare,
+  Trash2,
+  EyeIcon,
+  Loader2,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { deletePost } from "@/lib/actions/server";
 import { createClient } from "@/utils/supabase/client";
+
+// Agregar esta función antes del componente DashboardPage
+
+function extractCommentContent(content: any): string {
+  try {
+    if (typeof content === "string") {
+      try {
+        const parsed = JSON.parse(content);
+        return extractCommentContent(parsed);
+      } catch {
+        return content;
+      }
+    }
+
+    if (content?.content) {
+      return content.content
+        .map((node: any) => {
+          if (node.type === "paragraph") {
+            return (node.content || [])
+              .map((text: any) => text.text || "")
+              .join("");
+          }
+          return "";
+        })
+        .join("\n");
+    }
+
+    return "";
+  } catch (error) {
+    console.error("Error extracting comment content:", error);
+    return "Error displaying content";
+  }
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -42,8 +76,11 @@ export default function DashboardPage() {
     async function getUserContent() {
       try {
         // Obtener usuario actual directamente de Supabase
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+
         if (userError || !user) {
           router.push("/auth/login");
           return;
@@ -51,24 +88,24 @@ export default function DashboardPage() {
 
         // Obtener posts del usuario directamente de Supabase
         const { data: userPosts, error: postsError } = await supabase
-          .from('posts')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-          
+          .from("posts")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
         if (postsError) {
           throw postsError;
         }
-        
+
         setPosts(userPosts || []);
 
         // Obtener comentarios del usuario directamente de Supabase
         const { data: userComments, error: commentsError } = await supabase
-          .from('comments')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-          
+          .from("comments")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+
         if (commentsError) {
           throw commentsError;
         }
@@ -77,18 +114,18 @@ export default function DashboardPage() {
         const commentsWithPosts = await Promise.all(
           (userComments || []).map(async (comment) => {
             const { data: postData } = await supabase
-              .from('posts')
-              .select('id, title, slug')
-              .eq('id', comment.post_id)
+              .from("posts")
+              .select("id, title, slug")
+              .eq("id", comment.post_id)
               .single();
-            
+
             return {
               ...comment,
-              post: postData
+              post: postData,
             };
           })
         );
-        
+
         setComments(commentsWithPosts);
       } catch (error) {
         console.error("Error fetching user content:", error);
@@ -103,10 +140,10 @@ export default function DashboardPage() {
 
   const handleDeletePost = async (postId: string) => {
     setIsDeleting(postId);
-    
+
     try {
       await deletePost(postId);
-      setPosts(posts.filter(post => post.id !== postId));
+      setPosts(posts.filter((post) => post.id !== postId));
       console.log("Post deleted successfully");
     } catch (error: any) {
       console.error(error.message || "Failed to delete post");
@@ -222,8 +259,11 @@ export default function DashboardPage() {
                     })}
                   </CardDescription>
                 </CardHeader>
+               
                 <CardContent>
-                  <p className="text-sm">{comment.content}</p>
+                  <p className="text-sm">
+                    {extractCommentContent(comment.content)}
+                  </p>
                 </CardContent>
               </Card>
             ))}

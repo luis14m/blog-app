@@ -11,8 +11,7 @@ type Comment = Database["public"]["Tables"]["comments"]["Row"] & {
 
 
 
-type Post = Pick<Database['public']['Tables']['posts']['Row'], 
-  'id' | 'title' | 'excerpt' | 'slug' | 'created_at' | 'cover_image' | 'user_id'> & {
+type Post = Database['public']['Tables']['posts']['Row'] & {
     profiles?: {
       username: string;
       display_name: string;
@@ -147,147 +146,172 @@ export async function getPostCommentsPaginated(
   }
 }
 
-//----------------------POSTS Actions--------------------------------
-
-export async function getPublishedPosts(): Promise<Post[]> {
-
-    const supabase = await createClient();
-    const { data: posts, error } = await supabase
-    .from("posts")
-    .select(`
-      id,
-      title,
-      excerpt,
-      slug,
-      created_at,
-      cover_image,
-      user_id,
-      profiles(username, display_name, avatar_url)
-    `)
-    .eq("published", true)
-    .order("created_at", { ascending: false })
+export async function getNewCommentWithAttachments(commentId: string): Promise<Comment | null> {
+  const supabase = createClient();
   
-  
-    if (error) throw error;
-    return posts;
-  }
-  export async function getPostsLimit(limit: number): Promise<Post[]> {
-    try {
-      const supabase = await createClient();
-      const { data: posts, error } = await supabase
-        .from("posts")
-        .select(` 
-          id,
-          title,
-          excerpt,
-          slug,
-          created_at,
-          cover_image,
-          user_id,
-          content,
-          published,
-          updated_at,
-          profiles (
-            username,
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq("published", true)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        throw error;
-      }
-
-      return posts || [];
-    } catch (error) {
-      console.error('Error al obtener los posts limitados:', error);
-      return [];
-    }
-  }
-  export async function getPostBySlug(slug: string): Promise<Post | null> {
-    const supabase = await createClient();
-  
-    const { data: post, error } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        profiles!fk_posts_user(*)
-      `)
-      .eq("slug", slug)
-      .single();
-  
-    if (error) {
-      if (error.code === "PGRST116") {
-        // If not found by slug, try by ID
-        const { data, error: idError } = await supabase
-          .from("posts")
-          .select(`
-            *,
-            profiles!fk_posts_user(*)
-          `)
-          .eq("id", slug)
-          .single();
-  
-        if (idError) throw idError;
-        return data;
-      }
-      throw error;
-    }
-  
-    return post;
-  }
-  
-  export async function getUserPosts(userId: string): Promise<Post[]> {
-    const supabase = await createClient();
-  
-    const { data, error } = await supabase
-      .from("posts")
+  try {
+    // Obtener el comentario con su perfil
+    const { data: comment, error: commentError } = await supabase
+      .from("comments")
       .select(`
         *,
         profiles:user_id(*)
       `)
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
-  
-    if (error) throw error;
-    return data || [];
-  }
-  
-  export async function getPostById(id: string): Promise<Post | null> {
-    const supabase = await createClient();
-  
-    const { data, error } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        profiles!fk_posts_user(*)
-      `)
-      .eq("id", id)
+      .eq("id", commentId)
       .single();
-  
-    if (error) throw error;
-    return data;
+    
+    if (commentError) {
+      console.error("Error fetching new comment:", commentError.message);
+      return null;
+    }
+
+    // Obtener los archivos adjuntos del comentario
+    const { data: attachments, error: attachmentsError } = await supabase
+      .from("attachments")
+      .select("*")
+      .eq("comment_id", commentId);
+
+    if (attachmentsError) {
+      console.error("Error fetching attachments:", attachmentsError.message);
+      return null;
+    }
+
+    // Combinar el comentario con sus archivos adjuntos
+    return {
+      ...comment,
+      attachments: attachments || []
+    } as Comment;
+    
+  } catch (error) {
+    console.error("Error in getNewCommentWithAttachments:", error);
+    return null;
   }
-  
-  export async function getPostByIdWithAttachments(id: string): Promise<Post | null> {
+}
+
+//----------------------POSTS Actions--------------------------------
+
+export async function getPublishedPosts(): Promise<Post[]> {
     const supabase = await createClient();
-  
-    const { data, error } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        attachments(*)
-      `)
-      .eq("id", id)
-      .single();
-  
+    const { data: posts, error } = await supabase
+        .from("posts")
+        .select(`
+         *,
+            profiles(username, display_name, avatar_url)
+        `)
+        .eq("published", true)
+        .order("created_at", { ascending: false });
+
     if (error) throw error;
-    return data;
+    return posts;
+}
+
+export async function getPostsLimit(limit: number): Promise<Post[]> {
+  try {
+    const supabase = await createClient();
+    const { data: posts, error } = await supabase
+      .from("posts")
+      .select(` 
+     *,
+        profiles (
+          username,
+          display_name,
+          avatar_url
+        )
+      `)
+      .eq("published", true)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      throw error;
+    }
+
+    return posts || [];
+  } catch (error) {
+    console.error('Error al obtener los posts limitados:', error);
+    return [];
   }
-  
+}
+export async function getPostBySlug(slug: string): Promise<Post | null> {
+  const supabase = await createClient();
+
+  const { data: post, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      profiles!fk_posts_user(*)
+    `)
+    .eq("slug", slug)
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      // If not found by slug, try by ID
+      const { data, error: idError } = await supabase
+        .from("posts")
+        .select(`
+          *,
+          profiles!fk_posts_user(*)
+        `)
+        .eq("id", slug)
+        .single();
+
+      if (idError) throw idError;
+      return data;
+    }
+    throw error;
+  }
+
+  return post;
+}
+
+export async function getUserPosts(userId: string): Promise<Post[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      profiles:user_id(*)
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getPostById(id: string): Promise<Post | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      profiles!fk_posts_user(*)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getPostByIdWithAttachments(id: string): Promise<Post | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      attachments(*)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
   
 
   //----------------------PROFILEPOSTS Actions--------------------------------
@@ -307,6 +331,34 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data;
 }
 
+// Agregar después de getProfile()
+
+export async function getUserAndProfile(): Promise<{
+  user: any;
+  profile: Database["public"]["Tables"]["profiles"]["Row"] | null;
+}> {
+  const supabase = createClient();
+  
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      return { user: null, profile: null };
+    }
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+
+    return { user, profile };
+  } catch (error) {
+    console.error('Error fetching user and profile:', error);
+    return { user: null, profile: null };
+  }
+}
+
   export async function getProfilePostsByType(
     profileId: string,
    
@@ -323,5 +375,4 @@ export async function getProfile(userId: string): Promise<Profile | null> {
     if (error) throw error;
     return data || [];
   }
-  
- 
+

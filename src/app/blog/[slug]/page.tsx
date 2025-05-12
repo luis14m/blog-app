@@ -11,22 +11,21 @@ import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
 import { getPostBySlug } from "@/lib/actions/client";
 import { getPostAttachments } from "@/lib/actions/client";
-import type { Database } from '@/types/supabase';
+import { Database } from "@/types/supabase";
 
 type Post = Database['public']['Tables']['posts']['Row'] & {
   profiles?: Database['public']['Tables']['profiles']['Row'] | null;
-}
+};
 
-type BlogParams = {
+interface PageProps {
   params: {
-    slug: string
-  }
-  searchParams?: { [key: string]: string | string[] | undefined }
+    slug: string;
+  };
 }
 
-export default async function BlogPage({ params }: BlogParams) {
-  // Esperar a que los parámetros estén disponibles
-  const { slug } = await params;
+export default async function BlogPostPage({ params }: PageProps) {
+
+  const {slug} = await params;
 
   // Try to get post by slug first
   const post = await getPostBySlug(slug);
