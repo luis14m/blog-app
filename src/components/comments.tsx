@@ -12,7 +12,7 @@ import { createClient } from "@/utils/supabase/client";
 import { Loader2, ChevronDown } from "lucide-react";
 import { createCommentFromForm } from "@/lib/actions/server";
 
-import { getPostCommentsPaginated } from "@/lib/actions/client";
+import { getNewCommentWithAttachments, getPostCommentsPaginated } from "@/lib/actions/client";
 
 interface CommentsProps {
   postId: string;
