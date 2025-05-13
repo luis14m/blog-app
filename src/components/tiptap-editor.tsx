@@ -313,7 +313,7 @@ export default function TiptapEditor({
 
         {onAttachmentRequest && (
           <>
-            <Separator orientation="vertical" className="mx-1 h-6" />
+         <Separator orientation="vertical" className="mx-1 h-6" />
             <Button 
               size="sm" 
               variant="outline" 

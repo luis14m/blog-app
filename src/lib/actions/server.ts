@@ -141,7 +141,6 @@ export async function updatePost(id: string, formData: FormData) {
       excerpt: excerpt || null,
       slug,
       published,
-      cover_image: coverImage || null,
     })
     .eq('id', id)
 
@@ -161,7 +160,6 @@ export async function getPostsLimit(limit: number) {
     excerpt,
     slug,
     created_at,
-    cover_image,
     user_id,  
   `)
   .eq("published", true)
@@ -194,7 +192,17 @@ export async function deletePost(id: string) {
     throw new Error('You do not have permission to delete this post')
   }
 
-  // Delete post
+  // First delete all comments associated with the post
+  const { error: commentsDeleteError } = await supabase
+    .from('comments')
+    .delete()
+    .eq('post_id', id)
+
+  if (commentsDeleteError) {
+    throw commentsDeleteError
+  }
+
+  // Then delete the post
   const { error: deleteError } = await supabase
     .from('posts')
     .delete()
@@ -203,8 +211,6 @@ export async function deletePost(id: string) {
   if (deleteError) {
     throw deleteError
   }
-
-
 }
 
 //----------------------PROFILE Actions--------------------------------

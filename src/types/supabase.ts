@@ -81,7 +81,6 @@ export type Database = {
           created_at: string
           updated_at: string
           user_id: string
-          cover_image: string | null
         }
         Insert: {
           id?: string
@@ -93,7 +92,6 @@ export type Database = {
           created_at?: string
           updated_at?: string
           user_id: string
-          cover_image?: string | null
         }
         Update: {
           id?: string
@@ -105,7 +103,6 @@ export type Database = {
           created_at?: string
           updated_at?: string
           user_id?: string
-          cover_image?: string | null
         }
       }
       profile_posts: {

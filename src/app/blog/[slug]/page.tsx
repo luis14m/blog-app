@@ -1,4 +1,3 @@
-
 import * as React from 'react'
 import { Suspense } from "react";
 import Link from "next/link";
@@ -45,15 +44,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
   return (
     <div className="container max-w-4xl py-8">
       {/* Cover image */}
-      {post.cover_image && (
-        <div className="aspect-video w-full overflow-hidden rounded-lg mb-8">
-          <img
-            src={post.cover_image}
-            alt={post.title}
-            className="w-full h-full object-cover"
-          />
-        </div>
-      )}
+      
 
       {/* Post header */}
       <div className="mb-8">
@@ -64,7 +55,7 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
             <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
               {post.profiles?.avatar_url ? (
                 <img
-                  src={post.profiles.avatar_url}
+                  // Eliminado: src={post.cover_image}
                   alt={post.profiles.display_name || "Author"}
                   className="h-full w-full object-cover"
                 />

@@ -21,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2} from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { signOut } from "@/app/auth/actions";
@@ -29,7 +29,6 @@ import { createClient } from '@/utils/supabase/client'
 import { Database } from "@/types/supabase";
 import { getUserAndProfile } from '@/lib/actions/client';
 
-const supabase = createClient()
 export function Navbar() {
   const [userWithProfile, setUserWithProfile] = useState<{
     user: any;
@@ -38,63 +37,76 @@ export function Navbar() {
   const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
-    async function loadUserAndProfile() {
+    let mounted = true;
+
+    const fetchUserData = async () => {
       try {
-        // Obtener la sesión actual primero
         const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
+        if (session && mounted) {
           const result = await getUserAndProfile();
           setUserWithProfile(result);
-        } else {
+        } else if (mounted) {
           setUserWithProfile({ user: null, profile: null });
         }
       } catch (error) {
-        console.error('Error loading user and profile:', error);
+        console.error('Error fetching user data:', error);
       } finally {
+        if (mounted) setLoading(false);
+      }
+    };
+
+    // Fetch initial data
+    fetchUserData();
+
+    // Setup realtime subscription
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      if (event === 'SIGNED_IN') {
+        setLoading(true);
+        const result = await getUserAndProfile();
+        setUserWithProfile(result);
         setLoading(false);
+        router.refresh();
+      } else if (event === 'SIGNED_OUT') {
+        setUserWithProfile({ user: null, profile: null });
+        router.refresh();
       }
-    }
-    
-    loadUserAndProfile();
-  
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session) {
-          const result = await getUserAndProfile();
-          setUserWithProfile(result);
-        } else {
-          setUserWithProfile({ user: null, profile: null });
-        }
-      }
-    );
-  
-    return () => subscription.unsubscribe();
-  }, []);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [router, supabase]);
 
   const handleSignOut = async () => {
     try {
+      setLoading(true);
       await signOut();
-      router.push('/');
+      setUserWithProfile({ user: null, profile: null });
       router.refresh();
-     
     } catch (error) {
       console.error('Error signing out:', error);
+      setLoading(false);
     }
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <Image
               src="https://tlvuxyxktqqzvynbhhtu.supabase.co/storage/v1/object/public/NukleoPublico/UsoPublicoGeneral/Logo.png"
               alt="Logo"
-              width={64}
-              height={64}
+              width={128}
+              height={128}
               className="h-8 w-8"
             />
             <span className="hidden font-bold sm:inline-block">

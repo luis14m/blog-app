@@ -52,6 +52,7 @@ export default function LoginPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
         router.push('/profile'); // Usar router.push en lugar de redirect
+        
       }
     });
   }, [router]);
@@ -66,8 +67,7 @@ export default function LoginPage() {
       formData.append('password', values.password);
       
       await login(formData);
-      // Si llegamos aquí sin redirección, redirigimos manualmente
-      router.push('/');
+      router.refresh();
     } catch (error: any) {
       setError(error.message || "Error de autenticación");
       console.error('Error:', error);
@@ -109,6 +109,7 @@ export default function LoginPage() {
                           type="email"
                           autoComplete="email"
                           className="pl-10"
+                          disabled={isLoading}
                           {...field} 
                         />
                       </div>
@@ -130,6 +131,7 @@ export default function LoginPage() {
                           placeholder="••••••••" 
                           type="password"
                           className="pl-10"
+                          disabled={isLoading}
                           {...field} 
                         />
                       </div>

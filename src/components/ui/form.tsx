@@ -155,14 +155,18 @@ const FormMessage = React.forwardRef<
   }
 
   return (
-    <p
-      ref={ref}
-      id={formMessageId}
-      className={cn('text-sm font-medium text-destructive', className)}
-      {...props}
-    >
-      {body}
-    </p>
+    <div>
+      {formMessageId && (
+        <p
+          ref={ref}
+          id={formMessageId}
+          className={cn('text-sm font-medium text-destructive', className)}
+          {...props}
+        >
+          {body}
+        </p>
+      )}
+    </div>
   );
 });
 FormMessage.displayName = 'FormMessage';
@@ -176,4 +180,17 @@ export {
   FormDescription,
   FormMessage,
   FormField,
+};
+
+// Mensajes de error en español
+export const formErrorMessages = {
+  required: 'Este campo es obligatorio',
+  minLength: 'Este campo debe tener al menos {min} caracteres',
+  maxLength: 'Este campo debe tener menos de {max} caracteres',
+  pattern: 'El formato ingresado no es válido',
+  email: 'Ingrese un correo electrónico válido',
+  url: 'Ingrese una URL válida',
+  numeric: 'Este campo solo acepta números',
+  tel: 'Ingrese un número de teléfono válido',
+  date: 'Ingrese una fecha válida',
 };

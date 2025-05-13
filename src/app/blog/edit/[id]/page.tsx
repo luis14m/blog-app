@@ -88,7 +88,7 @@ export default function EditPostPage(props: PageProps) {
           title: post.title,
           excerpt: post.excerpt || "",
           published: post.published || false,
-          coverImage: post.cover_image || "",
+          coverImage: "",
         });
         
         // Establecer el contenido del editor

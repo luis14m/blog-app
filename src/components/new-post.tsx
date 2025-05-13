@@ -96,8 +96,7 @@ export function NewPostSheet() {
         title: values.title,
         content: content as Json,
         excerpt: values.excerpt,
-        published: values.published,
-        cover_image: values.coverImage
+        published: values.published
       });
 
       // Link attachments to post
@@ -137,12 +136,14 @@ export function NewPostSheet() {
     
     <SheetContent side="right" className="px-6 sm:max-w-xl overflow-y-auto">
       <SheetHeader>
-        <SheetTitle>Create New Post</SheetTitle>
-        <SheetDescription>Start writing your new blog post..</SheetDescription>
+        <SheetTitle>Nuevo Proyecto de Construcción</SheetTitle>
+        <SheetDescription>
+          Comparte los detalles de tu proyecto con la comunidad.
+        </SheetDescription>
       </SheetHeader>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           {/* Cover Image Upload */}
           <div className="mb-6">
             <FormLabel>Cover Image</FormLabel>
@@ -186,10 +187,13 @@ export function NewPostSheet() {
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>Título del Proyecto</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter post title" {...field} />
+                  <Input placeholder="Introduce el título de tu proyecto" {...field} />
                 </FormControl>
+                <FormDescription>
+                  Un título descriptivo para tu proyecto de construcción.
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -200,17 +204,16 @@ export function NewPostSheet() {
             name="excerpt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Excerpt</FormLabel>
+                <FormLabel>Resumen</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter a short excerpt for your post"
+                    placeholder="Breve descripción del proyecto"
                     className="resize-none"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  A brief summary of your post that will be displayed in the
-                  post list.
+                  Un resumen corto que describe los aspectos principales del proyecto.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -1,14 +1,6 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { PenSquare } from "lucide-react";
 import { getPublishedPosts } from "@/lib/actions/client";
-import {
-  Sheet,
-  
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { NewPostSheet } from "@/components/new-post";
-
+import { NewPostButton } from "@/components/new-post-button";
 
 export default async function BlogPage() {
   try {
@@ -18,17 +10,7 @@ export default async function BlogPage() {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-3xl font-bold">Blog Posts</h1>
-         
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button>
-                  <PenSquare className="mr-2 h-4 w-4" />
-                  New Post
-                </Button>
-              </SheetTrigger>
-              <NewPostSheet />
-            </Sheet>
-          
+          <NewPostButton />
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -39,15 +21,6 @@ export default async function BlogPage() {
                 href={`/blog/${post.slug || post.id}`}
                 className="group flex flex-col overflow-hidden rounded-lg border bg-background transition-colors hover:bg-accent/30"
               >
-                {post.cover_image && (
-                  <div className="aspect-video overflow-hidden">
-                    <img
-                      src={post.cover_image}
-                      alt={post.title}
-                      className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                    />
-                  </div>
-                )}
                 <div className="flex flex-col space-y-2 p-6">
                   <h2 className="text-xl font-bold">{post.title}</h2>
                   {post.excerpt && (
@@ -59,7 +32,6 @@ export default async function BlogPage() {
                     <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                       {post.profiles?.avatar_url ? (
                         <img
-                          src={post.profiles.avatar_url}
                           alt={
                             post.profiles.display_name || post.profiles.username
                           }

@@ -15,23 +15,23 @@ export default async function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                  Share Your Ideas
+                  Comparte tus proyectos
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  A modern blogging platform where you can create, share, and discuss ideas through rich content and meaningful conversations.
+                  Una plataforma moderna donde puedes crear, compartir y discutir ideas sobre proyectos de construcción a través de contenido detallado y conversaciones significativas.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button asChild size="lg">
                   <Link href="/blog" >
                     <BookOpen className="mr-2 h-4 w-4" />
-                    Explore Posts
+                    Explorar Proyectos
                   </Link>
                 </Button>
                 <Button asChild variant="outline" size="lg">
                   <Link href="/blog" >
                     <PenSquare className="mr-2 h-4 w-4" />
-                    Start Writing
+                    Compartir Proyecto
                   </Link>
                 </Button>
               </div>
@@ -47,9 +47,9 @@ export default async function Home() {
                   <PenSquare className="h-8 w-8 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold">Rich Content Editor</h3>
+                  <h3 className="text-xl font-bold">Editor de Contenido Avanzado</h3>
                   <p className="text-muted-foreground">
-                    Create beautiful posts with our intuitive rich text editor. Format text, add images, links, and more.
+                    Crea publicaciones detalladas con nuestro editor intuitivo. Da formato al texto, añade imágenes, planos y más.
                   </p>
                 </div>
               </div>
@@ -58,9 +58,9 @@ export default async function Home() {
                   <MessageSquare className="h-8 w-8 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold">Meaningful Discussions</h3>
+                  <h3 className="text-xl font-bold">Discusiones Técnicas</h3>
                   <p className="text-muted-foreground">
-                    Engage in discussions with rich commenting. Attach files, format your responses, and have deeper conversations.
+                    Participa en discusiones técnicas detalladas. Adjunta archivos, comparte especificaciones y mantén conversaciones profesionales.
                   </p>
                 </div>
               </div>
@@ -69,9 +69,9 @@ export default async function Home() {
                   <Users className="h-8 w-8 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold">User Profiles</h3>
+                  <h3 className="text-xl font-bold">Perfiles Profesionales</h3>
                   <p className="text-muted-foreground">
-                    Build your online presence with customizable profiles. Showcase your posts and track your contributions.
+                    Construye tu presencia profesional con perfiles personalizables. Muestra tus proyectos y seguimiento de contribuciones.
                   </p>
                 </div>
               </div>
@@ -84,10 +84,10 @@ export default async function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  Latest Posts
+                  Últimos Proyectos
                 </h2>
                 <p className="mx-auto max-w-[700px] text-muted-foreground">
-                  Discover the latest thoughts and ideas from our community.
+                  Descubre los últimos proyectos de KLV.
                 </p>
               </div>
             </div>
@@ -100,15 +100,6 @@ export default async function Home() {
                     href={`/blog/${post.slug || post.id}`}
                     className="group flex flex-col overflow-hidden rounded-lg border bg-background transition-colors hover:bg-accent/30"
                     >
-                    {post.cover_image && (
-                      <div className="aspect-video overflow-hidden">
-                        <img
-                          src={post.cover_image}
-                          alt={post.title}
-                          className="object-cover w-full h-full transition-transform group-hover:scale-105"
-                        />
-                      </div>
-                    )}
                     <div className="flex flex-col space-y-2 p-6">
                       <h3 className="text-xl font-bold">{post.title}</h3>
                       {post.excerpt && (
@@ -120,7 +111,6 @@ export default async function Home() {
                         <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                           {post.profiles?.avatar_url ? (
                             <img
-                              src={post.profiles.avatar_url}
                               alt={post.profiles.display_name || post.profiles.username}
                               className="h-full w-full object-cover"
                             />
@@ -146,7 +136,7 @@ export default async function Home() {
                 ))
               ) : (
                 <div className="col-span-3 text-center py-12">
-                  <p className="text-muted-foreground">No posts yet. Be the first to create one!</p>
+                  <p className="text-muted-foreground">Aún no hay proyectos publicados. ¡Sé el primero en compartir uno!</p>
                 </div>
               )}
             </div>
@@ -154,7 +144,7 @@ export default async function Home() {
             <div className="flex justify-center mt-8">
               <Button asChild variant="outline">
                 <Link href="/blog">
-                  See all posts
+                  Ver todos los proyectos
                 </Link>
               </Button>
             </div>
@@ -166,7 +156,7 @@ export default async function Home() {
     console.error('Error al cargar los posts más recientes:', error);
     return (
       <div className="container mx-auto px-4">
-        <h1>Lo sentimos, hubo un error al cargar los posts</h1>
+        <h1>Lo sentimos, hubo un error al cargar los proyectos</h1>
       </div>
     );
   }

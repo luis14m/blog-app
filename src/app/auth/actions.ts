@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-
 import { createClient } from '@/utils/supabase/server'
 import { createProfile } from '@/lib/actions/server'
 
@@ -12,8 +11,6 @@ export async function login(formData: FormData) {
   // Obtener la URL de origen si existe
   const redirectTo = formData.get('redirectTo') as string || '/'
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -22,22 +19,24 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
-    redirect('/error')
+    throw error
   }
 
+  // Revalidar rutas específicas
   revalidatePath('/', 'layout')
-  // Redirigir al usuario a la página de origen
+  revalidatePath('/', 'page')
+  revalidatePath('/blog')
+  revalidatePath('/dashboard')
+  revalidatePath('/profile')
+  
   redirect(redirectTo)
 }
 
 export async function signup(formData: FormData) {
   const supabase = await createClient()
 
-  // Obtener la URL de origen si existe
   const redirectTo = formData.get('redirectTo') as string || '/'
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -46,8 +45,7 @@ export async function signup(formData: FormData) {
   const { data: authData, error } = await supabase.auth.signUp(data)
 
   if (error) {
-    console.log(error)
-    redirect('/error')
+    throw error
   }
 
   if (authData.user) {
@@ -58,8 +56,13 @@ export async function signup(formData: FormData) {
     }
   }
 
+  // Revalidar rutas específicas
   revalidatePath('/', 'layout')
-  // Redirigir al usuario a la página de origen
+  revalidatePath('/', 'page')
+  revalidatePath('/blog')
+  revalidatePath('/dashboard')
+  revalidatePath('/profile')
+  
   redirect(redirectTo)
 }
 
@@ -68,6 +71,12 @@ export async function signOut() {
   
   await supabase.auth.signOut()
   
-  revalidatePath('/')
+  // Revalidar rutas específicas
+  revalidatePath('/', 'layout')
+  revalidatePath('/', 'page')
+  revalidatePath('/blog')
+  revalidatePath('/dashboard')
+  revalidatePath('/profile')
+  
   redirect('/')
 }
