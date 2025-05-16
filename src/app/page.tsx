@@ -136,7 +136,8 @@ export default async function Home() {
                 ))
               ) : (
                 <div className="col-span-3 text-center py-12">
-                  <p className="text-muted-foreground">Aún no hay proyectos publicados. ¡Sé el primero en compartir uno!</p>
+                  <p className="text-muted-foreground">Aún no hay proyectos publicados. 
+                    ¡Sé el primero en compartir uno!</p>
                 </div>
               )}
             </div>
