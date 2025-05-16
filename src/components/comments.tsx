@@ -10,9 +10,10 @@ import FileUploader from "@/components/file-uploader";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, ChevronDown } from "lucide-react";
-import { createCommentFromForm } from "@/lib/actions/server";
+import { createCommentFromForm } from "@/lib/actions/comment.server";
 
-import { getNewCommentWithAttachments, getPostCommentsPaginated } from "@/lib/actions/client";
+import { getNewCommentWithAttachments, getPostCommentsPaginated } 
+from "@/lib/actions/comment.client";
 
 interface CommentsProps {
   postId: string;

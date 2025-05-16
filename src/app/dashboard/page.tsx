@@ -28,8 +28,10 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { deletePost } from "@/lib/actions/server";
+import { deletePost } from "@/lib/actions/client";
 import { createClient } from "@/utils/supabase/client";
+import { isAdmin } from "@/utils/roles";
+import { NewPostButton } from "@/components/new-post-button";
 
 // Agregar esta función antes del componente DashboardPage
 
@@ -67,76 +69,106 @@ function extractCommentContent(content: any): string {
 export default function DashboardPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [posts, setPosts] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
-    async function getUserContent() {
+    async function checkAdminStatus() {
+      const adminStatus = await isAdmin();
+      setIsAdminUser(adminStatus);
+    }
+    checkAdminStatus();
+  }, []);
+
+  useEffect(() => {
+    async function fetchContent() {
       try {
-        // Obtener usuario actual directamente de Supabase
-        const {
-          data: { user },
-          error: userError,
-        } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-          router.push("/auth/login");
-          return;
-        }
-
-        // Obtener posts del usuario directamente de Supabase
-        const { data: userPosts, error: postsError } = await supabase
-          .from("posts")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (postsError) {
-          throw postsError;
-        }
-
-        setPosts(userPosts || []);
-
-        // Obtener comentarios del usuario directamente de Supabase
-        const { data: userComments, error: commentsError } = await supabase
-          .from("comments")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-
-        if (commentsError) {
-          throw commentsError;
-        }
-
-        // Obtener los detalles de los posts para cada comentario
-        const commentsWithPosts = await Promise.all(
-          (userComments || []).map(async (comment) => {
-            const { data: postData } = await supabase
-              .from("posts")
-              .select("id, title, slug")
-              .eq("id", comment.post_id)
-              .single();
-
-            return {
-              ...comment,
-              post: postData,
-            };
-          })
-        );
-
-        setComments(commentsWithPosts);
-      } catch (error) {
-        console.error("Error fetching user content:", error);
-        console.error("Failed to load content");
-      } finally {
-        setLoading(false);
+        setError(null);
+        await getUserContent();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching content');
       }
     }
+    fetchContent();
+  }, [router, supabase, isAdminUser]);
 
-    getUserContent();
-  }, [router, supabase]);
+  async function getUserContent() {
+    try {
+      // Obtener usuario actual directamente de Supabase
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError) {
+        console.error('Authentication error:', userError.message);
+        router.push("/auth/login");
+        return;
+      }
+
+      if (!user) {
+        console.error('No authenticated user found');
+        router.push("/auth/login");
+        return;
+      }
+
+      // Query adjusts based on admin status
+      let postsQuery = supabase
+        .from("posts")
+        .select(`
+          *,
+          profile:profiles(username, display_name)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (!isAdminUser) {
+        postsQuery = postsQuery.eq("user_id", user.id);
+      }
+
+      const { data: userPosts, error: postsError } = await postsQuery;
+
+      if (postsError) {
+        console.error('Error fetching posts:', postsError.message);
+        throw new Error(`Failed to fetch posts: ${postsError.message}`);
+      }
+
+      setPosts(userPosts || []);
+
+      // Query adjusts based on admin status
+      let commentsQuery = supabase
+        .from("comments")
+        .select(`
+          *,
+          profile:profiles(username, display_name),
+          post:posts(title, slug, id)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (!isAdminUser) {
+        commentsQuery = commentsQuery.eq("user_id", user.id);
+      }
+
+      const { data: userComments, error: commentsError } = await commentsQuery;
+
+      if (commentsError) {
+        console.error('Error fetching comments:', commentsError.message);
+        throw new Error(`Failed to fetch comments: ${commentsError.message}`);
+      }
+
+      setComments(userComments || []);
+    } catch (error) {
+      console.error("Error fetching user content:", error instanceof Error ? error.message : 'Unknown error');
+      // Don't redirect on data fetch errors, just show error state
+      setLoading(false);
+      throw error; // Re-throw to be handled by error boundary
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleDeletePost = async (postId: string) => {
     setIsDeleting(postId);
@@ -162,16 +194,34 @@ export default function DashboardPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="container py-8">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">Error: {error}</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => window.location.reload()}
+            className="mt-2"
+          >
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Button asChild>
-          <Link href="/blog/new">
-            <PenSquare className="mr-2 h-4 w-4" />
-            New Post
-          </Link>
-        </Button>
+        <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          {isAdminUser && (
+            <Badge variant="secondary">Admin</Badge>
+          )}
+        </div>
+        <NewPostButton /> 
       </div>
 
       <Tabs defaultValue="posts" className="mt-8">
@@ -184,7 +234,11 @@ export default function DashboardPage() {
             {posts.map((post) => (
               <Card key={post.id}>
                 <CardHeader>
-                  <CardTitle>{post.title}</CardTitle>
+                  <CardTitle>{post.title}</CardTitle>                  {isAdminUser && (
+                    <CardDescription className="text-primary">
+                      Author: {post.profile?.display_name || "Unknown"}
+                    </CardDescription>
+                  )}
                   <CardDescription>
                     {formatDistanceToNow(new Date(post.created_at), {
                       addSuffix: true,
@@ -252,7 +306,11 @@ export default function DashboardPage() {
                     >
                       {comment.post.title}
                     </Link>
-                  </CardTitle>
+                  </CardTitle>                  {isAdminUser && (
+                    <CardDescription className="text-primary">
+                      Author: {comment.profile?.display_name || "Unknown"}
+                    </CardDescription>
+                  )}
                   <CardDescription>
                     {formatDistanceToNow(new Date(comment.created_at), {
                       addSuffix: true,

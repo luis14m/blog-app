@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
-import { createProfile } from '@/lib/actions/server'
+import { createProfile } from '@/lib/actions/profile.server'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
@@ -28,8 +28,9 @@ export async function login(formData: FormData) {
   revalidatePath('/blog')
   revalidatePath('/dashboard')
   revalidatePath('/profile')
+
+  redirect('/blog')
   
-  redirect(redirectTo)
 }
 
 export async function signup(formData: FormData) {
@@ -67,16 +68,7 @@ export async function signup(formData: FormData) {
 }
 
 export async function signOut() {
-  const supabase = await createClient()
-  
-  await supabase.auth.signOut()
-  
-  // Revalidar rutas específicas
-  revalidatePath('/', 'layout')
-  revalidatePath('/', 'page')
-  revalidatePath('/blog')
-  revalidatePath('/dashboard')
-  revalidatePath('/profile')
-  
-  redirect('/')
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  return redirect('/auth/login');
 }

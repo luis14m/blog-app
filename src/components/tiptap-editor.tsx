@@ -1,6 +1,5 @@
-"use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -32,7 +31,15 @@ interface TiptapEditorProps {
   onAttachmentRequest?: () => void;
   editorClass?: string;
   placeholder?: string;
-  immediatelyRender:false;
+  immediatelyRender: false;
+  attachments?: {
+    id: string;
+    file_name: string;
+    file_path: string;
+    file_type: string;
+    file_size: number;
+  }[];
+  onRemoveAttachment?: (id: string) => void;
 }
 
 export default function TiptapEditor({
@@ -40,12 +47,15 @@ export default function TiptapEditor({
   onChange,
   onAttachmentRequest,
   editorClass,
-  placeholder = "Write something...",
+  attachments,
+  onRemoveAttachment,
 }: TiptapEditorProps) {
   const [linkUrl, setLinkUrl] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [imageOpen, setImageOpen] = useState(false);
+  const [localAttachments, setLocalAttachments] = useState<{ id: string, file: File, url: string }[]>([]);"use client";
+
 
   const editor = useEditor({
     extensions: [
@@ -221,6 +231,34 @@ export default function TiptapEditor({
 
         <Separator orientation="vertical" className="mx-1 h-6" />
 
+        {/* Botón para adjuntar imagen */}
+        <>
+          <input
+            type="file"
+            accept="image/*"
+            id="tiptap-image-upload"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              const url = URL.createObjectURL(file);
+              if (editor) {
+                editor.chain().focus().setImage({ src: url }).run();
+              }
+              // Permite volver a subir la misma imagen si se desea
+              e.target.value = '';
+            }}
+          />
+          <button
+            type="button"
+            aria-label="Adjuntar Imagen"
+            onClick={() => document.getElementById('tiptap-image-upload')?.click()}
+            className="px-2 py-1 rounded hover:bg-muted focus:outline-none flex items-center"
+          >
+            <ImageIcon className="h-4 w-4" />
+          </button>
+        </>
+
         <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
           <DialogTrigger asChild>
             <Toggle 
@@ -311,21 +349,37 @@ export default function TiptapEditor({
           <Redo className="h-4 w-4" />
         </Button>
 
-        {onAttachmentRequest && (
-          <>
-         <Separator orientation="vertical" className="mx-1 h-6" />
-            <Button 
-              size="sm" 
-              variant="outline" 
-              onClick={onAttachmentRequest}
-              className="ml-auto"
-            >
-              Attach Files
-            </Button>
-          </>
-        )}
-      </div>
-      <EditorContent editor={editor} />
+        <Separator orientation="vertical" className="mx-1 h-6" />
+        <Button
+          size="sm"
+          variant="outline"
+          className="ml-auto"
+          onClick={() => document.getElementById('tiptap-file-input')?.click()}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.586-6.586a4 4 0 00-5.656-5.656l-6.586 6.586a6 6 0 108.485 8.485l6.586-6.586" /></svg>
+          <input
+            id="tiptap-file-input"
+            type="file"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              // Mostrar archivo localmente en el editor, no subir aún a Supabase
+              let url = '';
+              if (file.type.startsWith('image/')) {
+                url = URL.createObjectURL(file);
+                editor.chain().focus().setImage({ src: url }).run();
+              } else {
+                url = URL.createObjectURL(file);
+                editor.chain().focus().insertContent(`<a href='${url}' target='_blank' rel='noopener noreferrer' class='block px-2 py-1 rounded bg-accent text-xs'>${file.name}</a>`).run();
+              }
+              e.target.value = '';
+            }}
+            accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+          />
+        </Button>
     </div>
-  );
+    <EditorContent editor={editor} />
+  </div>
+);
 }

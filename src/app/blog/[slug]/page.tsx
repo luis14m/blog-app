@@ -5,13 +5,14 @@ import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PenSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
 import { generateHTML } from '@tiptap/html';
 import StarterKit from '@tiptap/starter-kit';
-import { getPostBySlug } from "@/lib/actions/client";
-import { getPostAttachments } from "@/lib/actions/client";
+import { getPostBySlug } from "@/lib/actions/post.client";
+import { getPostAttachments } from "@/lib/actions/attachment.client";
 import { Database } from "@/types/supabase";
 
 type Post = Database['public']['Tables']['posts']['Row'] & {
@@ -20,35 +21,69 @@ type Post = Database['public']['Tables']['posts']['Row'] & {
 
 
 export default async function BlogPostPage(props: { params: Promise<{ slug: string }> }) {
-  const params = await props.params;
-  // ...existing code...
-  const { slug } = params;
-  // ...existing code...
+  try {
+    const params = await props.params;
+    const { slug } = params;
 
-  // Try to get post by slug first
-  const post = await getPostBySlug(slug);
+    const post = await getPostBySlug(slug);
+    if (!post) {
+      return (
+        <div className="container mx-auto px-4 py-12 text-center">
+          <h1 className="text-2xl font-bold mb-4">Post no encontrado</h1>
+          <p>El post solicitado no existe o fue eliminado.</p>
+          <Button asChild className="mt-4">
+            <Link href="/blog">Volver al blog</Link>
+          </Button>
+        </div>
+      );
+    }
 
+    // Get post attachments
+    const attachments = await getPostAttachments(post.id);
 
-  if (!post) {
-    notFound();
+    // Check if current user is the post owner
+    const supabase = await createClient();
+    const { data: userData } = await supabase.auth.getUser();
+
+    // ...resto del renderizado del post...
+
+  } catch (error: any) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <h1 className="text-2xl font-bold mb-4">Error al cargar el post</h1>
+        <p className="text-red-500 mb-2">
+          {error?.message || "Ocurrió un error inesperado al cargar el post."}
+        </p>
+        {error?.details && (
+          <pre className="text-xs text-muted-foreground bg-muted rounded p-2 overflow-x-auto">
+            {JSON.stringify(error, null, 2)}
+          </pre>
+        )}
+        <Button asChild className="mt-4">
+          <Link href="/blog">Volver al blog</Link>
+        </Button>
+      </div>
+    );
   }
-
-  // Get post attachments
-  const attachments = await getPostAttachments(post.id);
-
-  // Check if current user is the post owner
-  const supabase = await createClient();
-  const { data: userData } = await supabase.auth.getUser();
+}
   const isOwner = userData?.user?.id === post.user_id;
 
   return (
     <div className="container max-w-4xl py-8">
       {/* Cover image */}
-      
-
-      {/* Post header */}
+          {/* Post header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold leading-tight mb-4">{post.title}</h1>
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-4xl font-bold leading-tight">{post.title}</h1>
+          {isOwner && (
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/blog/edit/${post.id}`}>
+                <PenSquare className="mr-2 h-4 w-4" />
+                Edit Post
+              </Link>
+            </Button>
+          )}
+        </div>
         
         <div className="flex items-center gap-4 text-muted-foreground">
           <div className="flex items-center gap-2">
@@ -80,18 +115,23 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
             <>
               <span>•</span>
               <span className="text-yellow-500 dark:text-yellow-400 font-medium">Draft</span>
-            </>
-          )}
+            </>          )}
         </div>
-        
-        {isOwner && (
-          <div className="flex gap-2 mt-4">
-            <Button asChild variant="outline" size="sm">
-              <Link href={`/blog/edit/${post.id}`}>Edit Post</Link>
-            </Button>
-          </div>
-        )}
       </div>
+
+      {/* Date label */}
+      {post.fecha && (
+        <div className="flex items-center gap-2 text-muted-foreground mb-6">
+          <span className="text-sm font-medium">Fecha:</span>
+          <time dateTime={post.fecha} className="text-sm">
+            {new Date(post.fecha).toLocaleDateString('es-ES', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}
+          </time>
+        </div>
+      )}
 
       {/* Post content */}
       <div className="prose prose-lg dark:prose-invert max-w-none mb-12">

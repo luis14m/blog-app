@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
-import { getPostsLimit } from "@/lib/actions/client";
+import { getPostsLimit } from "@/lib/actions/post.client";
 
 export default async function Home() {
   try {
@@ -87,7 +87,7 @@ export default async function Home() {
                   Últimos Proyectos
                 </h2>
                 <p className="mx-auto max-w-[700px] text-muted-foreground">
-                  Descubre los últimos proyectos de KLV.
+                  Descubre los últimos proyectos.
                 </p>
               </div>
             </div>
@@ -109,18 +109,11 @@ export default async function Home() {
                       )}
                       <div className="flex items-center gap-2 pt-2">
                         <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
-                          {post.profiles?.avatar_url ? (
-                            <img
-                              alt={post.profiles.display_name || post.profiles.username}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-medium">
-                              {(post.profiles?.display_name || post.profiles?.username || "User")
-                                .charAt(0)
-                                .toUpperCase()}
-                            </div>
-                          )}
+                          <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-medium">
+                            {(post.profiles?.display_name || post.profiles?.username || "User")
+                              .charAt(0)
+                              .toUpperCase()}
+                          </div>
                         </div>
                         <div className="text-sm">
                           <p className="font-medium">

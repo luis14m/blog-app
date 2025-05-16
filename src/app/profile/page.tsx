@@ -15,9 +15,9 @@ import { createClient } from "@/utils/supabase/client";
 const formSchema = z.object({
   username: z.string().min(5).max(50),
   displayName: z.string().min(2).max(50),
-  avatarUrl: z.string().url().optional().or(z.literal('')),
-  bio: z.string().max(160).optional(),
-  website: z.string().url().optional().or(z.literal('')),
+  
+  
+  
 });
 
 export default function ProfilePage() {
@@ -31,9 +31,9 @@ export default function ProfilePage() {
     defaultValues: {
       username: "",
       displayName: "",
-      avatarUrl: "",
-      bio: "",
-      website: "",
+      
+      
+      
     },
   });
 
@@ -62,9 +62,9 @@ export default function ProfilePage() {
         form.reset({
           username: profileData.username || "",
           displayName: profileData.display_name || "",
-          avatarUrl: profileData.avatar_url || "",
-          bio: profileData.bio || "",
-          website: profileData.website || "",
+          
+          
+          
         });
       } catch (error) {
         console.error("Error loading profile:", error);
@@ -84,9 +84,9 @@ export default function ProfilePage() {
       const formData = new FormData();
       formData.append('username', values.username);
       formData.append('displayName', values.displayName);
-      formData.append('avatarUrl', values.avatarUrl || '');
-      formData.append('bio', values.bio || '');
-      formData.append('website', values.website || '');
+      
+      
+      
       
       await updateProfile(formData);
       console.log("Profile updated successfully");

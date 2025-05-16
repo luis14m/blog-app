@@ -27,7 +27,7 @@ import Image from "next/image";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from '@/utils/supabase/client'
 import { Database } from "@/types/supabase";
-import { getUserAndProfile } from '@/lib/actions/client';
+import { getUserAndProfile } from '@/lib/actions/profile.client';
 
 export function Navbar() {
   const [userWithProfile, setUserWithProfile] = useState<{
@@ -147,10 +147,9 @@ export function Navbar() {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={userWithProfile.profile?.avatar_url || 
+                        src={
                              userWithProfile.user.user_metadata?.avatar_url}
-                        alt={userWithProfile.profile?.display_name || 
-                             userWithProfile.user.email}
+                        alt={userWithProfile.user.email}
                         loading="eager"
                         onError={(e) => {
                           const img = e.currentTarget;
@@ -158,8 +157,7 @@ export function Navbar() {
                         }}
                       />
                       <AvatarFallback>
-                        {(userWithProfile.profile?.display_name?.[0] || 
-                          userWithProfile.user.email?.[0])?.toUpperCase()}
+                        {userWithProfile.user.email?.[0]?.toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </Button>

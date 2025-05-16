@@ -59,7 +59,7 @@ export default function SignUpPage() {
       await signup(formData);
       console.log("¡Cuenta creada con éxito!");
     } catch (error: any) {
-      console.error(error.message || "Error al crear la cuenta");
+      //console.error(error.message || "Error al crear la cuenta");
       console.error('Error:', error);
     } finally {
       setIsLoading(false);

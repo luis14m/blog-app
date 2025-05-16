@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -18,19 +17,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import TiptapEditor from "@/components/tiptap-editor";
-import FileUploader from "@/components/file-uploader";
+
 import { createClient } from "@/utils/supabase/client";
-import { toast } from "sonner"
+import { toast } from "sonner";
 
 import { Loader2 } from "lucide-react";
 
 import { updatePost } from "@/lib/actions/server";
+import { getPostById } from "@/lib/actions/client";
+import type { Database, Json } from "@/types/supabase";
+
+
+
+type Post = Database["public"]["Tables"]["posts"]["Row"];
 
 interface PageProps {
   params: Promise<{
@@ -41,21 +42,19 @@ interface PageProps {
 const formSchema = z.object({
   title: z.string().min(3).max(100),
   excerpt: z.string().max(200).optional(),
+  fecha: z.string().optional(),
   published: z.boolean().default(false),
-  coverImage: z.string().url().optional(),
 });
 
 export default function EditPostPage(props: PageProps) {
   const params = use(props.params);
   const { id } = params;
   const router = useRouter();
-  const [post, setPost] = useState<any>(null);
-  const [content, setContent] = useState({});
+  const [post, setPost] = useState<Post | null>(null);
+  const [content, setContent] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [attachments, setAttachments] = useState<any[]>([]);
-  const [showUploaderDialog, setShowUploaderDialog] = useState(false);
-  const [coverImageUploadOpen, setCoverImageUploadOpen] = useState(false);
+
   const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -63,23 +62,17 @@ export default function EditPostPage(props: PageProps) {
     defaultValues: {
       title: "",
       excerpt: "",
+      fecha: "",
       published: false,
-      coverImage: "",
     },
   });
-
   useEffect(() => {
-    async function getPost() {
+    const getPost = async () => {
       try {
-        // Obtener post directamente de Supabase
-        const { data: post, error } = await supabase
-          .from('posts')
-          .select('*')
-          .eq('id', id)
-          .single();
-        
-        if (error || !post) {
-          console.error("Error fetching post:", error);
+        const post = await getPostById(id);
+
+        if (!post) {
+          console.error("Post not found");
           router.push("/blog");
           return;
         }
@@ -87,13 +80,24 @@ export default function EditPostPage(props: PageProps) {
         form.reset({
           title: post.title,
           excerpt: post.excerpt || "",
+          fecha: post.fecha || "",
           published: post.published || false,
-          coverImage: "",
         });
-        
-        // Establecer el contenido del editor
+
+        // Handle editor content
         if (post.content) {
-          setContent(post.content);
+          try {
+            // If it's a string, parse it once
+            const editorContent =
+              typeof post.content === "string"
+                ? JSON.parse(post.content)
+                : post.content;
+
+            setContent(editorContent);
+          } catch (error) {
+            console.error("Error parsing content:", error);
+            setContent({});
+          }
         }
       } catch (error) {
         console.error("Error fetching post:", error);
@@ -101,36 +105,24 @@ export default function EditPostPage(props: PageProps) {
       } finally {
         setIsLoading(false);
       }
-    }
+    };
 
     getPost();
-  }, [id, router, form, supabase]);
-
-  const handleCoverImageUpload = (files: any[]) => {
-    if (files.length > 0) {
-      // Get the file path from the storage
-      const { data } = supabase.storage.from("attachments").getPublicUrl(files[0].file_path);
-      
-      if (data?.publicUrl) {
-        form.setValue("coverImage", data.publicUrl);
-        toast.success("Cover image uploaded successfully");
-        setCoverImageUploadOpen(false);
-      }
-    }
-  };
-
+  }, [id, router, form]);
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    
     try {
       const formData = new FormData();
-      formData.append('title', values.title);
-      formData.append('excerpt', values.excerpt || '');
-      formData.append('published', values.published.toString());
-      formData.append('coverImage', values.coverImage || '');
-      formData.append('content', JSON.stringify({ type: 'doc', content: [] }));
-      
+      formData.append("title", values.title);
+      formData.append("excerpt", values.excerpt || "");
+      formData.append("fecha", values.fecha || "");
+      formData.append("published", values.published.toString());
+      formData.append("content", JSON.stringify(content)); // Añadir el content del editor
+
       await updatePost(id, formData);
+      const updatedPost = await getPostById(id);
+      toast.success("Post updated successfully");
+      router.push(`/blog/${updatedPost.slug}`);
     } catch (error: any) {
       toast.error(error.message || "Failed to update post");
     } finally {
@@ -138,16 +130,9 @@ export default function EditPostPage(props: PageProps) {
     }
   }
 
-  const handleAttachmentRequest = () => {
-    setShowUploaderDialog(true);
-  };
+  
 
-  const handleUploadComplete = (files: any[]) => {
-    setAttachments((prev) => [...prev, ...files]);
-    setShowUploaderDialog(false);
-  };
-
-  if (isLoading) {
+    if (isLoading) {
     return (
       <div className="container py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -157,48 +142,10 @@ export default function EditPostPage(props: PageProps) {
 
   return (
     <div className="container py-8 max-w-4xl">
+      
       <h1 className="text-3xl font-bold mb-8">Edit Post</h1>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          {/* Cover Image Upload */}
-          <div className="mb-6">
-            <FormLabel>Cover Image</FormLabel>
-            <div className="mt-2 flex items-center gap-4">
-              {form.watch("coverImage") ? (
-                <div className="relative aspect-video w-full max-w-md overflow-hidden rounded-lg border">
-                  <img
-                    src={form.watch("coverImage")}
-                    alt="Cover"
-                    className="h-full w-full object-cover"
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={() => form.setValue("coverImage", "")}
-                  >
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setCoverImageUploadOpen(true)}
-                >
-                  Upload Cover Image
-                </Button>
-              )}
-            </div>
-            {form.formState.errors.coverImage && (
-              <p className="text-sm font-medium text-destructive mt-2">
-                {form.formState.errors.coverImage.message}
-              </p>
-            )}
-          </div>
-
           <FormField
             control={form.control}
             name="title"
@@ -212,23 +159,41 @@ export default function EditPostPage(props: PageProps) {
               </FormItem>
             )}
           />
-
+          <FormField
+            control={form.control}
+            name="fecha"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fecha </FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    className="w-full md:w-[150px]"
+                    {...field}
+                  />
+                </FormControl>
+                <FormDescription></FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="excerpt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Excerpt</FormLabel>
+                <FormLabel>Detalles o Lugar</FormLabel>
                 <FormControl>
-                  <Textarea 
-                    placeholder="Enter a short excerpt for your post" 
-                    className="resize-none" 
-                    {...field} 
+                  <Textarea
+                    placeholder="Enter a short excerpt for your post"
+                    className="resize-none"
+                    {...field}
                     value={field.value || ""}
                   />
                 </FormControl>
                 <FormDescription>
-                  A brief summary of your post that will be displayed in the post list.
+                  A brief summary of your post that will be displayed in the
+                  post list.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -237,82 +202,12 @@ export default function EditPostPage(props: PageProps) {
 
           <div className="space-y-2">
             <FormLabel>Content</FormLabel>
-            <TiptapEditor 
+            <TiptapEditor
               content={content}
               onChange={setContent}
-              onAttachmentRequest={handleAttachmentRequest}
-              editorClass="min-h-[300px]" immediatelyRender={false}            />
-          </div>
-
-          <div className="space-y-2">
-            <FormLabel>Attachments</FormLabel>
-            <div className="border rounded-md p-4">
-              {attachments.length > 0 ? (
-                <div className="space-y-2">
-                  {attachments.map((attachment) => (
-                    <div 
-                      key={attachment.id} 
-                      className="flex items-center justify-between p-2 border rounded-md"
-                    >
-                      <div className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-muted flex items-center justify-center rounded">
-                          {attachment.file_type.startsWith("image/") ? (
-                            <img
-                              src={supabase.storage.from("attachments").getPublicUrl(attachment.file_path).data?.publicUrl}
-                              alt={attachment.file_name}
-                              className="h-8 w-8 object-cover rounded"
-                            />
-                          ) : (
-                            <span className="text-xs">{attachment.file_type.split("/")[1]?.toUpperCase() || "FILE"}</span>
-                          )}
-                        </div>
-                        <span className="text-sm">{attachment.file_name}</span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={async () => {
-                          try {
-                            const { error } = await supabase
-                              .from("attachments")
-                              .delete()
-                              .eq("id", attachment.id);
-                              
-                            if (error) throw error;
-                            
-                            setAttachments(attachments.filter((a) => a.id !== attachment.id));
-                            toast.success("Attachment removed");
-                          } catch (error: any) {
-                            toast.error(error.message || "Failed to remove attachment");
-                          }
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={handleAttachmentRequest}
-                  >
-                    Add More Attachments
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">No attachments added yet</p>
-                  <Button 
-                    type="button" 
-                    variant="outline"
-                    onClick={handleAttachmentRequest}
-                  >
-                    Add Attachments
-                  </Button>
-                </div>
-              )}
-            </div>
+              editorClass="min-h-[300px]"
+              immediatelyRender={false}
+            />
           </div>
 
           <FormField
@@ -329,14 +224,21 @@ export default function EditPostPage(props: PageProps) {
                 <div className="space-y-1 leading-none">
                   <FormLabel>Publish</FormLabel>
                   <FormDescription>
-                    If checked, this post will be visible to everyone. Otherwise, it will be saved as a draft.
+                    If checked, this post will be visible to everyone.
+                    Otherwise, it will be saved as a draft.
                   </FormDescription>
                 </div>
               </FormItem>
             )}
           />
-
-          <div className="flex gap-4">
+          <div className="flex gap-4 justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => router.back()}
+            >
+              Cancel
+            </Button>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? (
                 <>
@@ -347,42 +249,9 @@ export default function EditPostPage(props: PageProps) {
                 "Update Post"
               )}
             </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => router.back()}
-            >
-              Cancel
-            </Button>
           </div>
         </form>
       </Form>
-
-      {/* File uploader dialog */}
-      <Dialog open={showUploaderDialog} onOpenChange={setShowUploaderDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Add Attachments</DialogTitle>
-          <FileUploader 
-            onUploadComplete={handleUploadComplete} 
-            entityId={id}
-            entityType="post"
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Cover image uploader dialog */}
-      <Dialog open={coverImageUploadOpen} onOpenChange={setCoverImageUploadOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Upload Cover Image</DialogTitle>
-          <FileUploader 
-            onUploadComplete={handleCoverImageUpload} 
-            maxFiles={1}
-            acceptedFileTypes={["image/*"]}
-            entityId={id}
-            entityType="post"
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

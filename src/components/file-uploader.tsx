@@ -27,7 +27,6 @@ interface FileUploaderProps {
 export default function FileUploader({
   onUploadComplete,
   bucketName = "attachments",
-  folderPath = "",
   entityId,
   entityType,
   maxFiles = 5,
@@ -102,7 +101,7 @@ export default function FileUploader({
 
       const file = fileObj.file;
       const fileExt = file.name.split(".").pop();
-      const baseFolder = entityType && entityId ? `${entityType}s/${entityId}` : "";
+      const baseFolder = entityType && entityId ? `${entityType === "post" ? "posts" : "comments"}/${entityId}` : "";
       const filePath = `${baseFolder}/${Math.random().toString(36).substring(2, 11)}.${fileExt}`;
 
       try {
@@ -186,48 +185,66 @@ export default function FileUploader({
     <div className="w-full space-y-4">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 cursor-pointer flex flex-col items-center justify-center transition-colors ${
-          isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50"
+        className={`border border-dashed rounded-xl p-8 cursor-pointer transition-all ${
+          isDragActive 
+            ? "border-primary/70 bg-primary/5" 
+            : "border-border/50 hover:border-primary/30 hover:bg-accent/50"
         }`}
       >
-        <input {...getInputProps()} />
-        <UploadCloud className="h-10 w-10 text-muted-foreground mb-2" />
-        <p className="text-center text-sm font-medium">
-          Drag and drop files here, or click to select files
-        </p>
-        <p className="text-center text-xs text-muted-foreground mt-1">
-          Max {maxFiles} files, up to {maxSize}MB each
-        </p>
+        <input {...getInputProps()} onClick={e => e.stopPropagation()} />
+        <div className="flex flex-col items-center justify-center gap-2">
+          <UploadCloud className="h-12 w-12 text-primary/70" />
+          <div className="text-center">
+            <p className="text-sm font-medium">
+              Drop your files here, or <span className="text-primary">browse</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Supported formats: Images, PDF, Office documents, etc.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Up to {maxFiles} files, max {maxSize}MB each
+            </p>
+          </div>
+        </div>
       </div>
 
       {files.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="space-y-2">
             {files.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center gap-2 p-2 rounded-md border bg-background"
+                className="flex items-center gap-3 p-3 rounded-lg bg-accent/40 hover:bg-accent/60 transition-colors"
               >
                 {file.preview ? (
                   <img
                     src={file.preview}
-                    className="h-10 w-10 rounded object-cover"
+                    className="h-12 w-12 rounded-md object-cover ring-1 ring-border"
                     alt={file.file.name}
                   />
                 ) : (
-                  getFileIcon(file.file.type)
+                  <div className="h-12 w-12 rounded-md bg-background/80 ring-1 ring-border flex items-center justify-center">
+                    {getFileIcon(file.file.type)}
+                  </div>
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.file.name}</p>
+                  <p className="text-sm font-medium truncate text-foreground">
+                    {file.file.name}
+                  </p>
                   {file.uploading ? (
-                    <Progress value={file.progress} className="h-1.5 w-full" />
+                    <div className="mt-1">
+                      <Progress value={file.progress} className="h-1 w-full bg-accent" />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Uploading... {file.progress}%
+                      </p>
+                    </div>
                   ) : file.error ? (
-                    <p className="text-xs text-destructive">{file.error}</p>
+                    <p className="text-xs text-destructive mt-1">{file.error}</p>
                   ) : file.uploaded ? (
-                    <p className="text-xs text-green-600">Uploaded</p>
+                    <p className="text-xs text-emerald-600 mt-1">Successfully uploaded</p>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {(file.file.size / 1024 / 1024).toFixed(2)} MB
                     </p>
                   )}
@@ -235,7 +252,8 @@ export default function FileUploader({
 
                 <Button
                   variant="ghost"
-                  size="sm"
+                  size="icon"
+                  className="h-8 w-8 rounded-full hover:bg-accent"
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFile(file.id);
@@ -251,16 +269,20 @@ export default function FileUploader({
           <div className="flex justify-end gap-2">
             <Button 
               variant="outline" 
+              size="sm"
               onClick={() => setFiles([])}
               disabled={files.some((f) => f.uploading)}
+              className="rounded-full"
             >
               Clear All
             </Button>
             <Button
+              size="sm"
               onClick={uploadFiles}
               disabled={files.length === 0 || files.every((f) => f.uploaded) || files.some((f) => f.uploading)}
+              className="rounded-full"
             >
-              Upload
+              Adjuntar Files
             </Button>
           </div>
         </div>

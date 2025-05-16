@@ -1,5 +1,6 @@
+
 import Link from "next/link";
-import { getPublishedPosts } from "@/lib/actions/client";
+import { getPublishedPosts } from "@/lib/actions/post.client";
 import { NewPostButton } from "@/components/new-post-button";
 
 export default async function BlogPage() {
@@ -30,7 +31,7 @@ export default async function BlogPage() {
                   )}
                   <div className="flex items-center gap-2 pt-2">
                     <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
-                      {post.profiles?.avatar_url ? (
+                       ? (
                         <img
                           alt={
                             post.profiles.display_name || post.profiles.username

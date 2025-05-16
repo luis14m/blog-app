@@ -43,6 +43,29 @@ export type Database = {
           comment_id?: string | null
           user_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "attachments_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       comments: {
         Row: {
@@ -69,11 +92,28 @@ export type Database = {
           user_id?: string
           post_id?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       posts: {
         Row: {
           id: string
           title: string
+          fecha: string | null
           content: Json
           excerpt: string | null
           slug: string | null
@@ -85,6 +125,7 @@ export type Database = {
         Insert: {
           id?: string
           title: string
+          fecha: string | null
           content?: Json
           excerpt?: string | null
           slug?: string | null
@@ -96,6 +137,7 @@ export type Database = {
         Update: {
           id?: string
           title?: string
+          fecha: string | null
           content?: Json
           excerpt?: string | null
           slug?: string | null
@@ -104,38 +146,21 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-      }
-      profile_posts: {
-        Row: {
-          id: string
-          profile_id: string
-          post_id: string
-          
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          profile_id: string
-          post_id: string
-          
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          profile_id?: string
-          post_id?: string
-      
-          created_at?: string
-        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       profiles: {
         Row: {
           id: string
           username: string | null
           display_name: string | null
-          avatar_url: string | null
-          bio: string | null
-          website: string | null
           created_at: string
           updated_at: string
         }
@@ -143,9 +168,7 @@ export type Database = {
           id: string
           username?: string | null
           display_name?: string | null
-          avatar_url?: string | null
-          bio?: string | null
-          website?: string | null
+          
           created_at?: string
           updated_at?: string
         }
@@ -153,12 +176,18 @@ export type Database = {
           id?: string
           username?: string | null
           display_name?: string | null
-          avatar_url?: string | null
-          bio?: string | null
-          website?: string | null
           created_at?: string
           updated_at?: string
         }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
   }
