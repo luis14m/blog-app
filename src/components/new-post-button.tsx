@@ -9,14 +9,12 @@ import { createClient } from "@/utils/supabase/client";
 
 export function NewPostButton() {
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user: currentUser } } = await supabase.auth.getUser();
       setUser(currentUser);
-      setLoading(false);
     };
 
     getUser();
@@ -29,15 +27,6 @@ export function NewPostButton() {
       subscription.unsubscribe();
     };
   }, []);
-
-  if (loading) {
-    return (
-      <Button size="lg" disabled>
-        <PenSquare className="mr-2 h-4 w-4" />
-        Cargando...
-      </Button>
-    );
-  }
 
   return (
     <Sheet>

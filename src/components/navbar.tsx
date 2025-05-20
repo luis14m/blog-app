@@ -21,13 +21,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { signOut } from "@/app/auth/actions";
 import { createClient } from '@/utils/supabase/client'
 import { Database } from "@/types/supabase";
-import { getUserAndProfile } from '@/lib/actions/profile.client';
+import { getUserAndProfile } from '@/actions/profile.client';
 
 export function Navbar() {
   const [userWithProfile, setUserWithProfile] = useState<{
@@ -53,11 +52,11 @@ export function Navbar() {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
+        // Opcional: mostrar feedback visual en la UI
       } finally {
         if (mounted) setLoading(false);
       }
     };
-
     // Fetch initial data
     fetchUserData();
 
@@ -86,13 +85,16 @@ export function Navbar() {
   }, [router, supabase]);
 
   const handleSignOut = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       await signOut();
       setUserWithProfile({ user: null, profile: null });
       router.refresh();
+      router.push('/auth/login');
+      window.location.reload();
     } catch (error) {
       console.error('Error signing out:', error);
+    } finally {
       setLoading(false);
     }
   };
@@ -135,10 +137,8 @@ export function Navbar() {
             {/* Search bar can be added here */}
           </div>
           <nav className="flex items-center space-x-2">
-            
-            {loading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : userWithProfile.user ? (
+            {/* Solo mostrar loader durante la carga inicial */}
+            {userWithProfile.user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -147,10 +147,8 @@ export function Navbar() {
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
-                        src={
-                             userWithProfile.user.user_metadata?.avatar_url}
+                        src={userWithProfile.user.user_metadata?.avatar_url}
                         alt={userWithProfile.user.email}
-                        loading="eager"
                         onError={(e) => {
                           const img = e.currentTarget;
                           img.src = userWithProfile.user.user_metadata?.avatar_url || '';

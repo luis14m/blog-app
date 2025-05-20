@@ -6,14 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import TiptapEditor from "@/components/tiptap-editor";
-import FileUploader from "@/components/file-uploader";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, ChevronDown } from "lucide-react";
-import { createCommentFromForm } from "@/lib/actions/comment.server";
+import { createCommentFromForm } from "@/actions/comment.server";
+import { getNewCommentWithAttachments, getPostCommentsPaginated } from "@/actions/comment.client";
 
-import { getNewCommentWithAttachments, getPostCommentsPaginated } 
-from "@/lib/actions/comment.client";
 
 interface CommentsProps {
   postId: string;
@@ -29,7 +27,6 @@ interface CommentType {
   profiles?: {
     username?: string;
     display_name?: string;
-    avatar_url?: string;
   };
   attachments?: Array<{
     id: string;
@@ -214,8 +211,7 @@ export default function Comments({ postId }: CommentsProps) {
           } else if (payload.eventType === "DELETE") {
             // Remove deleted comment
             setComments((prev) => 
-              prev.filter((comment) => comment.id !== payload.old.id!)
-            );
+              prev.filter((comment) => comment.id !== payload.old.id!))
           }
         }
       )
@@ -247,7 +243,7 @@ export default function Comments({ postId }: CommentsProps) {
       profiles: {
         display_name: user.user_metadata?.full_name || "",
         username: user.user_metadata?.username || "",
-        avatar_url: user.user_metadata?.avatar_url || "",
+      
       },
       attachments: [],
     };
@@ -435,7 +431,6 @@ export default function Comments({ postId }: CommentsProps) {
             <div key={comment.id} className="space-y-2">
               <div className="flex items-start gap-4">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={comment.profiles?.avatar_url || ""} />
                   <AvatarFallback>
                     {(comment.profiles?.display_name || comment.profiles?.username || "Usuario")
                       .charAt(0)
@@ -516,16 +511,7 @@ export default function Comments({ postId }: CommentsProps) {
         </div>
       )}
 
-      {/* File uploader dialog */}
-      <Dialog open={showUploaderDialog} onOpenChange={setShowUploaderDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Agregar archivos adjuntos</DialogTitle>
-          <FileUploader
-            onUploadComplete={handleUploadComplete}
-            entityType="comment"
-          />
-        </DialogContent>
-      </Dialog>
+      
     </div>
   );
 }

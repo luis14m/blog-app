@@ -16,12 +16,11 @@ export async function getProfileById(id: string): Promise<Profile | null> {
   return data;
 }
 
-
 // Agregar después de getProfile()
 
 export async function getUserAndProfile(): Promise<{
   user: any;
-  profile: Database["public"]["Tables"]["profiles"]["Row"] | null;
+  profile: Profile | null;
 }> {
   const supabase = createClient();
   
@@ -62,4 +61,64 @@ export async function getUserAndProfile(): Promise<{
     return data || [];
   }
 
+  export async function deletePost(id: string) {
+    const supabase = await createClient()
+    
+    const { data: userData, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !userData.user) {
+      throw new Error('You must be logged in to delete a post')
+    }
+  
+    // Check if user is the post owner
+    const { data: post, error: postError } = await supabase
+      .from('posts')
+      .select('user_id')
+      .eq('id', id)
+      .single()
+  
+    if (postError) {
+      throw postError
+    }
+  
+    if (post.user_id !== userData.user.id) {
+      throw new Error('You do not have permission to delete this post')
+    }
+  
+    // First delete all comments associated with the post
+    const { error: commentsDeleteError } = await supabase
+      .from('comments')
+      .delete()
+      .eq('post_id', id)
+  
+    if (commentsDeleteError) {
+      throw commentsDeleteError
+    }
+  
+    // Then delete the post
+    const { error: deleteError } = await supabase
+      .from('posts')
+      .delete()
+      .eq('id', id)
+  
+    if (deleteError) {
+      throw deleteError
+    }
+  }
+
+
+export async function getProfile(userId: string): Promise<Profile | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", userId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// Agregar después de getProfile()
 

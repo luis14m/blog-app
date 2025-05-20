@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,13 +24,16 @@ import {
   FormMessage,
 } from "./ui/form";
 import { useRouter } from "next/navigation";
-import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
-import FileUploader from "./file-uploader";
+import { toast } from "sonner";
+
 import { createClient } from "@/utils/supabase/client";
-import { Checkbox } from "@/components/ui/checkbox";
-import type { Json } from "@/types/supabase";
-import { createPost } from "@/lib/actions/post.server";
-import { linkAttachmentsToPost } from "@/lib/actions/attachment.client"; 
+import { TYPES_MIME, type Json } from "@/types/supabase";
+import { createPost } from "@/actions/post.server";
+
+import { uploadDocuments } from "@/services/storage/uploadDocuments";
+import { createAttachment } from "@/actions/attachment.server";
+import { Checkbox } from "./ui/checkbox";
+import { FileUploadZone } from "./ui/FileUploadZone";
 
 const formSchema = z.object({
   title: z
@@ -39,16 +41,16 @@ const formSchema = z.object({
     .min(3, { message: "Title must be at least 3 characters long" }),
   excerpt: z.string().optional(),
   fecha: z.string().optional(),
+  content: z.any().optional(),
+  archivos: z.array(z.instanceof(File)).optional(),
   published: z.boolean().default(false),
+  
 });
 
 export function NewPostSheet() {
   const router = useRouter();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const [content, setContent] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const [attachments, setAttachments] = useState<any[]>([]);
-  const [showUploaderDialog, setShowUploaderDialog] = useState(false);
 
   const closeSheet = () => {
     const closeEvent = new Event("keydown");
@@ -64,53 +66,67 @@ export function NewPostSheet() {
       title: "",
       excerpt: "",
       fecha: "",
+      content: "",
+      archivos: [],
+
       published: false,
     },
   });
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (isLoading) return;
     setIsLoading(true);
-
+    let timeoutId: NodeJS.Timeout | null = null;
     try {
-      const { data: userData, error: userError } =
-        await supabase.auth.getUser();
+      // Lanzar toast si tarda más de 10 segundos
+      timeoutId = setTimeout(() => {
+        if (isLoading) {
+          toast.error('La creación del post está tardando demasiado. Intenta de nuevo.');
+          setIsLoading(false);
+        }
+      }, 10000);
 
+      const { data: userData, error: userError } = await supabase.auth.getUser();
       if (userError || !userData.user) {
-        throw new Error("You must be logged in to create a post");
+        throw new Error("You must be logged in to create un post");
+      }
+      const userId = userData.user.id;
+
+      // Subir archivos al storage y crear registros en attachments
+      let uploadedDocuments = [];
+      if (values.archivos && values.archivos.length > 0) {
+        uploadedDocuments = await uploadDocuments(values.archivos);
+        for (const file of uploadedDocuments) {
+          await createAttachment({
+            user_id: userId,
+            file_name: file.name,
+            file_url: file.url,
+            file_type: file.type,
+            file_size: file.size,
+          });
+        }
       }
 
-      const userId = userData.user.id;
-      const post = await createPost(userId, {
+      // Crear el post en la tabla posts
+      await createPost(userId, {
         title: values.title,
-        content: content as Json,
+        content: values.content as Json,
         excerpt: values.excerpt,
         fecha: values.fecha,
-        published: values.published,
+        published: values.published
       });
 
-      // Link attachments to post
-      try {
-        await linkAttachmentsToPost(post.id, attachments);
-      } catch (attachmentError) {
-        console.error("Error linking attachments:", attachmentError);
-      }
-      console.log("Post created successfully");
       closeSheet();
+      toast.success("Post creado con éxito");
+      router.refresh();
       router.push("/blog");
     } catch (error: any) {
-      console.error(error.message || "Failed to create post");
+      console.error("Error:", error);
+      toast.error(error.message || 'Ocurrió un error al crear el post.');
     } finally {
       setIsLoading(false);
+      if (timeoutId) clearTimeout(timeoutId);
     }
-  };
-
-  const handleAttachmentRequest = () => {
-    setShowUploaderDialog(true);
-  };
-
-  const handleUploadComplete = (files: any[]) => {
-    setAttachments((prev) => [...prev, ...files]);
-    setShowUploaderDialog(false);
   };
 
   return (
@@ -183,16 +199,52 @@ export function NewPostSheet() {
               </FormItem>
             )}
           />
-          <div className="space-y-2">
-            <FormLabel>Content</FormLabel>
-            <TiptapEditor
-              content={content}
-              onChange={setContent}
-              onAttachmentRequest={handleAttachmentRequest}
-              editorClass="min-h-[400px]"
-              immediatelyRender={false}
-            />
-          </div>
+          
+         
+          <FormField
+            control={form.control}
+            name="content"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contenido del Post</FormLabel>
+                <FormControl>
+                  <TiptapEditor
+                    content={field.value}
+                    onChange={field.onChange}
+                    editorClass="max-h-[400px]"
+                    immediatelyRender={false}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Campo archivos adjuntos */}
+          <FormField
+            control={form.control}
+            name="archivos"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Subir archivos</FormLabel>
+                <FormControl>
+                  <FileUploadZone
+                    files={Array.isArray(field.value) ? field.value : []}
+                    onFilesAdd={(files) => field.onChange([...(Array.isArray(field.value) ? field.value : []), ...files])}
+                    onFileRemove={(index) => {
+                      const newFiles = Array.isArray(field.value) ? [...field.value] : [];
+                      newFiles.splice(index, 1);
+                      field.onChange(newFiles);
+                    }}
+                    accept={TYPES_MIME}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          
           <FormField
             control={form.control}
             name="published"
@@ -213,7 +265,8 @@ export function NewPostSheet() {
                 </div>
               </FormItem>
             )}
-          />{" "}
+          />
+          
           <div className="flex gap-4 mb-8">
             <SheetClose asChild>
               <Button variant="outline" disabled={isLoading}>
@@ -226,13 +279,6 @@ export function NewPostSheet() {
           </div>
         </form>
       </Form>
-
-      <Dialog open={showUploaderDialog} onOpenChange={setShowUploaderDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogTitle>Add Attachments</DialogTitle>
-          <FileUploader onUploadComplete={handleUploadComplete} />
-        </DialogContent>
-      </Dialog>
     </SheetContent>
   );
 }

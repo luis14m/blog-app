@@ -1,3 +1,4 @@
+//type para el content del Post y del Comment
 export type Json =
   | string
   | number
@@ -12,10 +13,11 @@ export type Database = {
       attachments: {
         Row: {
           id: string
-          file_path: string
+          file_path: string  //es la url publica
           file_name: string
           file_type: string
           file_size: number
+          file_url: string
           created_at: string
           post_id: string | null
           comment_id: string | null
@@ -27,10 +29,11 @@ export type Database = {
           file_name: string
           file_type: string
           file_size: number
+          file_url: string
           created_at?: string
           post_id?: string | null
           comment_id?: string | null
-          user_id: string
+          user_id?: string
         }
         Update: {
           id?: string
@@ -38,6 +41,7 @@ export type Database = {
           file_name?: string
           file_type?: string
           file_size?: number
+          file_url?: string
           created_at?: string
           post_id?: string | null
           comment_id?: string | null
@@ -168,7 +172,6 @@ export type Database = {
           id: string
           username?: string | null
           display_name?: string | null
-          
           created_at?: string
           updated_at?: string
         }
@@ -192,3 +195,36 @@ export type Database = {
     }
   }
 }
+
+export type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
+
+export type AttachmentInsert = Database["public"]["Tables"]["attachments"]["Insert"];
+
+export type Comment = Database["public"]["Tables"]["comments"]["Row"] & {
+    profiles: Database["public"]["Tables"]["profiles"]["Row"] | null;
+    attachments: Database["public"]["Tables"]["attachments"]["Row"][];
+};
+
+export type Post = Database["public"]["Tables"]["posts"]["Row"] & {
+  profiles?: Database["public"]["Tables"]["profiles"]["Row"] | null;
+  attachments?: Database["public"]["Tables"]["attachments"]["Row"][];
+};
+
+export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
+
+export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
+
+export type PostInsert = Database["public"]["Tables"]["posts"]["Insert"];
+
+
+// https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+export const TYPES_MIME = [
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+].join(",");

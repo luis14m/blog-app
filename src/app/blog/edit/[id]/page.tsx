@@ -25,8 +25,8 @@ import { toast } from "sonner";
 
 import { Loader2 } from "lucide-react";
 
-import { updatePost } from "@/lib/actions/server";
-import { getPostById } from "@/lib/actions/client";
+import { updatePost } from "@/actions/post.server";
+import { getPostById } from "@/actions/post.client";
 import type { Database, Json } from "@/types/supabase";
 
 

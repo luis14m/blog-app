@@ -28,7 +28,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { deletePost } from "@/lib/actions/client";
+import { deletePost } from "@/actions/post.server";
 import { createClient } from "@/utils/supabase/client";
 import { isAdmin } from "@/utils/roles";
 import { NewPostButton } from "@/components/new-post-button";

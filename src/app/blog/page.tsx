@@ -1,7 +1,9 @@
 
 import Link from "next/link";
-import { getPublishedPosts } from "@/lib/actions/post.client";
+import { getPublishedPosts } from "@/actions/post.client";
 import { NewPostButton } from "@/components/new-post-button";
+
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default async function BlogPage() {
   try {
@@ -31,24 +33,13 @@ export default async function BlogPage() {
                   )}
                   <div className="flex items-center gap-2 pt-2">
                     <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
-                       ? (
-                        <img
-                          alt={
-                            post.profiles.display_name || post.profiles.username
-                          }
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-medium">
-                          {(
-                            post.profiles?.display_name ||
-                            post.profiles?.username ||
-                            "User"
-                          )
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>
+                          {(post.profiles?.display_name || post.profiles?.username || "User")
                             .charAt(0)
                             .toUpperCase()}
-                        </div>
-                      )}
+                        </AvatarFallback>
+                      </Avatar>
                     </div>
                     <div className="text-sm">
                       <p className="font-medium">

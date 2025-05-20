@@ -2,7 +2,7 @@
 // Aquí solo deben ir funciones que puedan ejecutarse en el navegador (lectura pública, fetch, etc)
 
 import { createClient } from "@/utils/supabase/client";
-import { Post } from "./types";
+import { Post } from "../types/types";
 
 // Ejemplo: obtener posts publicados (solo lectura pública)
 export async function getPublishedPosts(): Promise<Post[]> {
@@ -20,36 +20,7 @@ export async function getPublishedPosts(): Promise<Post[]> {
 }
 
 
-export async function getPostBySlug(slug: string): Promise<Post | null> {
-  const supabase = await createClient();
 
-  let { data: post, error } = await supabase
-    .from("posts")
-    .select(`
-      *,
-      profiles:user_id(*),
-      attachments(*)
-    `)
-    .eq("slug", slug)
-    .single();
-
-  if (error && error.code === "PGRST116") {
-    // If not found, try by ID
-    ({ data: post } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        profiles:user_id(*),
-        attachments(*)
-      `)
-      .eq("id", slug)
-      .maybeSingle());
-  } else if (error) {
-    throw error;
-  }
-
-  return post;
-}
 
 export async function getUserPosts(userId: string): Promise<Post[]> {
   const supabase = await createClient();
@@ -94,4 +65,22 @@ export async function getPostsLimit(limit: number): Promise<Post[]> {
     console.error('Error al obtener los posts limitados:', error);
     return [];
   }
+}
+
+
+
+export async function getPostById(id: string): Promise<Post | null> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      profiles!fk_posts_user(*)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (error) throw error;
+  return data;
 }

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
-import { getPostsLimit } from "@/lib/actions/post.client";
+import { getPostsLimit } from "@/actions/post.client";
 
 export default async function Home() {
   try {
@@ -18,7 +18,7 @@ export default async function Home() {
                   Comparte tus proyectos
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Una plataforma moderna donde puedes crear, compartir y discutir ideas sobre proyectos de construcción a través de contenido detallado y conversaciones significativas.
+                  Una plataforma donde puedes crear, compartir y discutir ideas sobre las Obras en Ejecucion de construcción a través de contenido detallado y conversaciones significativas.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
