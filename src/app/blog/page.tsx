@@ -1,6 +1,6 @@
 
 import Link from "next/link";
-import { getPublishedPosts } from "@/actions/post.client";
+import { getPublishedPosts } from "@/lib/actions/post.client";
 import { NewPostButton } from "@/components/new-post-button";
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -12,8 +12,8 @@ export default async function BlogPage() {
     return (
       <div className="container py-8">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-bold">Blog Posts</h1>
-          <NewPostButton />
+          <h1 className="text-3xl font-bold">Todos los Posts</h1>
+          
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

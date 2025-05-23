@@ -1,5 +1,4 @@
-
-import * as React from 'react'
+import * as React from "react";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,17 +8,18 @@ import { PenSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
-import { generateHTML } from '@tiptap/html';
-import StarterKit from '@tiptap/starter-kit';
-import { getPostBySlug } from "@/actions/post.server";
-import { getPostAttachments } from "@/actions/attachment.server";
+import { generateHTML } from "@tiptap/html";
+import StarterKit from "@tiptap/starter-kit";
+import Image from "@tiptap/extension-image";
+import { getPostBySlug } from "@/lib/actions/post.server";
+import { getPostAttachments } from "@/lib/actions/attachment.server";
 
-
-
-export default async function BlogPostPage(props: { params: Promise<{ slug: string }> }) {
+export default async function BlogPostPage(props: {
+  params: Promise<{ slug: string }>;
+}) {
   try {
     const params = await props.params;
-    const { slug } = await  params;
+    const { slug } = await params;
 
     const post = await getPostBySlug(slug);
     if (!post) {
@@ -45,7 +45,6 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
 
     return (
       <div className="container max-w-4xl py-8">
-       
         {/* Post header */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -59,30 +58,41 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
               </Button>
             )}
           </div>
-          
+
           <div className="flex items-center gap-4 text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                 <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-medium">
-                  {(post.profiles?.display_name || post.profiles?.username || "User")
+                  {(
+                    post.profiles?.display_name ||
+                    post.profiles?.username ||
+                    "User"
+                  )
                     .charAt(0)
                     .toUpperCase()}
                 </div>
               </div>
               <span>
-                {post.profiles?.display_name || post.profiles?.username || "Anonymous"}
+                {post.profiles?.display_name ||
+                  post.profiles?.username ||
+                  "Anonymous"}
               </span>
             </div>
             <span>•</span>
             <time dateTime={post.created_at}>
-              {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
+              {formatDistanceToNow(new Date(post.created_at), {
+                addSuffix: true,
+              })}
             </time>
-            
+
             {!post.published && (
               <>
                 <span>•</span>
-                <span className="text-yellow-500 dark:text-yellow-400 font-medium">Draft</span>
-              </>          )}
+                <span className="text-yellow-500 dark:text-yellow-400 font-medium">
+                  Draft
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -91,10 +101,10 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
           <div className="flex items-center gap-2 text-muted-foreground mb-6">
             <span className="text-sm font-medium">Fecha:</span>
             <time dateTime={post.fecha} className="text-sm">
-              {new Date(post.fecha).toLocaleDateString('es-ES', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+              {new Date(post.fecha).toLocaleDateString("es-ES", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </time>
           </div>
@@ -103,24 +113,29 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
         {/* Post content */}
         <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
           {/* Renderiza el contenido como HTML si es string, o usa generateHTML si es JSON */}
-          {typeof post.content === 'string' && post.content.trim().startsWith('<') ? (
+          {typeof post.content === "string" &&
+          post.content.trim().startsWith("<") ? (
             <div dangerouslySetInnerHTML={{ __html: post.content }} />
           ) : (
-            <div dangerouslySetInnerHTML={{ __html: getHTMLFromContent(post.content) }} />
+            <div
+              dangerouslySetInnerHTML={{
+                __html: getHTMLFromContent(post.content),
+              }}
+            />
           )}
         </div>
 
         {/* Post attachments */}
         {attachments && attachments.length > 0 && (
           <div className="mb-12">
-            <h3 className="text-xl font-bold mb-4">Attachments</h3>
+            <h3 className="text-xl font-bold mb-4">Archivos Adjuntos</h3>
             <div className="grid gap-2">
               {attachments.map((attachment) => {
-                const { data } = supabase.storage.from("attachments-docs").getPublicUrl(attachment.file_path);
+                // Usar directamente attachment.file_url como href
                 return (
                   <a
                     key={attachment.id}
-                    href={data?.publicUrl}
+                    href={attachment.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 p-2 border rounded-md hover:bg-accent/50 transition-colors"
@@ -128,15 +143,17 @@ export default async function BlogPostPage(props: { params: Promise<{ slug: stri
                     <div className="h-8 w-8 bg-muted flex items-center justify-center rounded">
                       {attachment.file_type.startsWith("image/") ? (
                         <img
-                          src={data?.publicUrl}
+                          src={attachment.file_url}
                           alt={attachment.file_name}
                           className="h-8 w-8 object-cover rounded"
                         />
                       ) : (
-                        <span className="text-xs">{attachment.file_type.split("/")[1]?.toUpperCase() || "FILE"}</span>
+                        <span className="text-xs">&nbsp;</span>
                       )}
                     </div>
-                    <span className="flex-1 truncate">{attachment.file_name}</span>
+                    <span className="flex-1 truncate">
+                      {attachment.file_name}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {formatFileSize(attachment.file_size)}
                     </span>
@@ -182,7 +199,7 @@ function CommentSkeleton() {
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-24" />
       </div>
-      
+
       <div className="mt-4 space-y-6">
         {Array.from({ length: 3 }).map((_, i) => (
           <div key={i} className="space-y-2">
@@ -201,7 +218,7 @@ function CommentSkeleton() {
 // Helper function to extract HTML from the content JSON using TipTap
 function getHTMLFromContent(content: any): string {
   try {
-    if (typeof content === 'string') {
+    if (typeof content === "string") {
       return content;
     }
     if (content) {
@@ -212,27 +229,27 @@ function getHTMLFromContent(content: any): string {
           },
           bulletList: {
             HTMLAttributes: {
-              class: 'list-disc ml-4',
+              class: "list-disc ml-4",
             },
           },
           orderedList: {
             HTMLAttributes: {
-              class: 'list-decimal ml-4',
+              class: "list-decimal ml-4",
             },
           },
-        })
+        }),
+        Image,
       ]);
     }
-    return 'No content available';
+    return "No content available";
   } catch (error) {
-    console.error('Error parsing content:', error);
-    return 'Error displaying content';
+    console.error("Error parsing content:", error);
+    return "Error displaying content";
   }
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
-

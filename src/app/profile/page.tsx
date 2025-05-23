@@ -8,9 +8,10 @@ import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { updateProfile } from "@/actions/profile.server";
+import { Card } from "@/components/ui/card";
+import { updateProfile } from "@/lib/actions/profile.server";
 import { createClient } from "@/utils/supabase/client";
-import { getProfile } from "@/actions/profile.client";
+import { getProfileById } from "@/lib/actions/profile.client";
 
 const formSchema = z.object({
   username: z.string().min(5).max(50),
@@ -46,7 +47,7 @@ export default function ProfilePage() {
         }
 
         // Usar función getProfile en vez de consulta directa
-        const profileData = await getProfile(user.id);
+        const profileData = await getProfileById(user.id);
 
         if (!profileData) {
           throw new Error("No profile found");
@@ -100,37 +101,46 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="container max-w-2xl py-8">
-      <div className="space-y-2 text-center">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <p className="text-muted-foreground">Update your profile information</p>
-      </div>
-
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-8">
-        <div className="space-y-2">
-          <Label htmlFor="username">Email</Label>
-          <Input id="username" {...form.register("username")} />
-          {form.formState.errors.username && (
-            <p className="text-sm text-red-500">
-              {form.formState.errors.username.message}
-            </p>
-          )}
+    <div className="flex justify-center mt-20">
+      <Card className="container max-w-2xl py-8 px-6">
+        <div className="space-y-2 text-center">
+          <h1 className="text-3xl font-bold">Profile</h1>
+          <p className="text-muted-foreground">Update your profile information</p>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="displayName">Nombre Apellido</Label>
-          <Input id="displayName" {...form.register("displayName")} />
-          {form.formState.errors.displayName && (
-            <p className="text-sm text-red-500">
-              {form.formState.errors.displayName.message}
-            </p>
-          )}
-        </div>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-8">
+          <div className="space-y-2">
+            <Label htmlFor="displayName" className="mb-2">
+              Nombre Apellido
+            </Label>
+            <Input
+              id="displayName"
+              {...form.register("displayName")}
+              className="mb-2"
+            />
+            {form.formState.errors.displayName && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.displayName.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="username" className="mb-2">
+              Email
+            </Label>
+            <Input id="username" {...form.register("username")} className="mb-2" />
+            {form.formState.errors.username && (
+              <p className="text-sm text-red-500">
+                {form.formState.errors.username.message}
+              </p>
+            )}
+          </div>
 
-        <Button type="submit" className="w-full" disabled={isSaving}>
-          {isSaving ? "Guardando..." : "Guardar cambios"}
-        </Button>
-      </form>
+          <Button type="submit" className="w-full" disabled={isSaving}>
+            {isSaving ? "Guardando..." : "Guardar cambios"}
+          </Button>
+        </form>
+      </Card>
     </div>
   );
 }

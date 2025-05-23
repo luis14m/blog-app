@@ -28,10 +28,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { deletePost } from "@/actions/post.server";
+import { deletePost } from "@/lib/actions/post.server";
 import { createClient } from "@/utils/supabase/client";
 import { isAdmin } from "@/utils/roles";
-import { NewPostButton } from "@/components/new-post-button";
+import { toast } from "sonner";
+
 
 // Agregar esta función antes del componente DashboardPage
 
@@ -176,7 +177,7 @@ export default function DashboardPage() {
     try {
       await deletePost(postId);
       setPosts(posts.filter((post) => post.id !== postId));
-      console.log("Post deleted successfully");
+      toast("Post deleted successfully");
     } catch (error: any) {
       console.error(error.message || "Failed to delete post");
     } finally {
@@ -221,7 +222,7 @@ export default function DashboardPage() {
             <Badge variant="secondary">Admin</Badge>
           )}
         </div>
-        <NewPostButton /> 
+        
       </div>
 
       <Tabs defaultValue="posts" className="mt-8">

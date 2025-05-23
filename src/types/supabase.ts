@@ -13,8 +13,8 @@ export type Database = {
       attachments: {
         Row: {
           id: string
-          file_path: string  //es la url publica
           file_name: string
+          file_path: string
           file_type: string
           file_size: number
           file_url: string
@@ -25,11 +25,11 @@ export type Database = {
         }
         Insert: {
           id?: string
-          file_path: string
           file_name: string
           file_type: string
           file_size: number
           file_url: string
+          file_path: string
           created_at?: string
           post_id?: string | null
           comment_id?: string | null
@@ -37,11 +37,11 @@ export type Database = {
         }
         Update: {
           id?: string
-          file_path?: string
           file_name?: string
           file_type?: string
           file_size?: number
           file_url?: string
+          file_path: string
           created_at?: string
           post_id?: string | null
           comment_id?: string | null
@@ -210,11 +210,19 @@ export type Post = Database["public"]["Tables"]["posts"]["Row"] & {
   attachments?: Database["public"]["Tables"]["attachments"]["Row"][];
 };
 
+export type PostInsert = Database["public"]["Tables"]["posts"]["Insert"];
+
+export type PostUpdate = Database["public"]["Tables"]["posts"]["Update"];
+
+//
+
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 
 export type ProfileInsert = Database["public"]["Tables"]["profiles"]["Insert"];
 
-export type PostInsert = Database["public"]["Tables"]["posts"]["Insert"];
+export type ProfileUpdate = Database["public"]["Tables"]["profiles"]["Update"];
+
+
 
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types

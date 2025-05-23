@@ -25,11 +25,9 @@ import { toast } from "sonner";
 
 import { Loader2 } from "lucide-react";
 
-import { updatePost } from "@/actions/post.server";
-import { getPostById } from "@/actions/post.client";
+import { updatePost } from "@/lib/actions/post.server";
+import { getPostById } from "@/lib/actions/post.client";
 import type { Database, Json } from "@/types/supabase";
-
-
 
 type Post = Database["public"]["Tables"]["posts"]["Row"];
 
@@ -43,6 +41,7 @@ const formSchema = z.object({
   title: z.string().min(3).max(100),
   excerpt: z.string().max(200).optional(),
   fecha: z.string().optional(),
+  content: z.any().optional(),
   published: z.boolean().default(false),
 });
 
@@ -64,6 +63,7 @@ export default function EditPostPage(props: PageProps) {
       excerpt: "",
       fecha: "",
       published: false,
+      content: "",
     },
   });
   useEffect(() => {
@@ -82,6 +82,7 @@ export default function EditPostPage(props: PageProps) {
           excerpt: post.excerpt || "",
           fecha: post.fecha || "",
           published: post.published || false,
+          content: post.content || "",
         });
 
         // Handle editor content
@@ -109,17 +110,18 @@ export default function EditPostPage(props: PageProps) {
 
     getPost();
   }, [id, router, form]);
+  
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
     try {
-      const formData = new FormData();
-      formData.append("title", values.title);
-      formData.append("excerpt", values.excerpt || "");
-      formData.append("fecha", values.fecha || "");
-      formData.append("published", values.published.toString());
-      formData.append("content", JSON.stringify(content)); // Añadir el content del editor
-
-      await updatePost(id, formData);
+      // Envía los datos como objeto plano, igual que new-post
+      await updatePost(id, {
+        title: values.title,
+        excerpt: values.excerpt || "",
+        fecha: values.fecha || "",
+        published: values.published,
+        content: values.content, // Esto será JSON, compatible con jsonb
+      });
       const updatedPost = await getPostById(id);
       toast.success("Post updated successfully");
       router.push(`/blog/${updatedPost.slug}`);
@@ -130,9 +132,7 @@ export default function EditPostPage(props: PageProps) {
     }
   }
 
-  
-
-    if (isLoading) {
+  if (isLoading) {
     return (
       <div className="container py-8 flex items-center justify-center min-h-[calc(100vh-4rem)]">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -142,7 +142,6 @@ export default function EditPostPage(props: PageProps) {
 
   return (
     <div className="container py-8 max-w-4xl">
-      
       <h1 className="text-3xl font-bold mb-8">Edit Post</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -182,7 +181,7 @@ export default function EditPostPage(props: PageProps) {
             name="excerpt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Detalles o Lugar</FormLabel>
+                <FormLabel>Excerpt</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Enter a short excerpt for your post"
@@ -200,16 +199,24 @@ export default function EditPostPage(props: PageProps) {
             )}
           />
 
-          <div className="space-y-2">
-            <FormLabel>Content</FormLabel>
-            <TiptapEditor
-              content={content}
-              onChange={setContent}
-              editorClass="min-h-[300px]"
-              immediatelyRender={false}
-            />
-          </div>
-
+          <FormField
+            control={form.control}
+            name="content"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contenido del Post</FormLabel>
+                <FormControl>
+                  <TiptapEditor
+                    content={field.value}
+                    onChange={field.onChange}
+                    editorClass="max-h-[400px]"
+                    immediatelyRender={false}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="published"

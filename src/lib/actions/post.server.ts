@@ -1,10 +1,9 @@
 'use server'
-
 import { createClient } from "@/utils/supabase/server";
 
-import type { PostInsert, Post } from '../types/types';
+import type { PostInsert, Post, PostUpdate } from '@/types/supabase';
 
-import { generateSlug } from "../lib/utils";
+import { generateSlug } from "@/lib/utils";
 
 export async function createPost(
   userId: string,
@@ -64,19 +63,16 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
   return post;
 }
 
-export async function updatePost(id: string, formData: FormData) {
-  const title = formData.get('title') as string
-  const content = formData.get('content') as string
-  const excerpt = formData.get('excerpt') as string
-  const published = formData.get('published') === 'true'
-  const coverImage = formData.get('coverImage') as string
 
-  const supabase = await createClient()
-  
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  
+export async function updatePost(id: string, data: PostUpdate) {
+  const { title, content, excerpt, fecha, published } = data;
+
+  const supabase = await createClient();
+
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
   if (userError || !userData.user) {
-    throw new Error('You must be logged in to update a post')
+    throw new Error('You must be logged in to update a post');
   }
 
   // Check if user is the post owner
@@ -84,19 +80,19 @@ export async function updatePost(id: string, formData: FormData) {
     .from('posts')
     .select('user_id')
     .eq('id', id)
-    .single()
+    .single();
 
   if (postError) {
-    throw postError
+    throw postError;
   }
 
   if (post.user_id !== userData.user.id) {
-    throw new Error('You do not have permission to update this post')
+    throw new Error('You do not have permission to update this post');
   }
 
   // Generate new slug from title
   const slug = generateSlug(title);
-    
+
   // Update post
   const { error: updateError } = await supabase
     .from('posts')
@@ -104,64 +100,33 @@ export async function updatePost(id: string, formData: FormData) {
       title,
       content,
       excerpt: excerpt || null,
+      fecha: fecha || null,
       slug,
       published,
     })
-    .eq('id', id)
+    .eq('id', id);
 
   if (updateError) {
-    throw updateError
-  }
-
-}
-
-
-
-export async function deletePost(id: string) {
-  const supabase = await createClient()
-  
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  
-  if (userError || !userData.user) {
-    throw new Error('You must be logged in to delete a post')
-  }
-
-  // Check if user is the post owner
-  const { data: post, error: postError } = await supabase
-    .from('posts')
-    .select('user_id')
-    .eq('id', id)
-    .single()
-
-  if (postError) {
-    throw postError
-  }
-
-  if (post.user_id !== userData.user.id) {
-    throw new Error('You do not have permission to delete this post')
-  }
-
-  // First delete all comments associated with the post
-  const { error: commentsDeleteError } = await supabase
-    .from('comments')
-    .delete()
-    .eq('post_id', id)
-
-  if (commentsDeleteError) {
-    throw commentsDeleteError
-  }
-
-  // Then delete the post
-  const { error: deleteError } = await supabase
-    .from('posts')
-    .delete()
-    .eq('id', id)
-
-  if (deleteError) {
-    throw deleteError
+    throw updateError;
   }
 }
 
+
+export async function getPostsByUserId(userId: string): Promise<Post[]> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      *,
+      profiles:user_id(*)
+    `)
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+  return data || [];
+}
 
 export async function getPostByIdWithAttachments(id: string): Promise<Post | null> {
   const supabase = await createClient();
@@ -178,3 +143,74 @@ export async function getPostByIdWithAttachments(id: string): Promise<Post | nul
   if (error) throw error;
   return data;
 }
+
+
+export async function deletePost(id: string) {
+  const supabase = await createClient()
+  
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  
+  if (userError || !userData.user) {
+    throw new Error('You must be logged in to delete a post')
+  }
+
+  // Get user profile to check role
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', userData.user.id)
+    .single()
+
+  if (profileError) {
+    throw profileError
+  }
+
+  // Check if user is the post owner
+  const { data: post, error: postError } = await supabase
+    .from('posts')
+    .select('user_id')
+    .eq('id', id)
+    .single()
+
+  if (postError) {
+    throw postError
+  }
+
+  // Only allow if admin or post owner
+  if (profile.role !== 'admin' && post.user_id !== userData.user.id) {
+    throw new Error('You do not have permission to delete this post')
+  }
+
+  // First delete all attachments associated with the post
+  const { error: attachmentsDeleteError } = await supabase
+    .from('attachments')
+    .delete()
+    .eq('post_id', id)
+
+  if (attachmentsDeleteError) {
+    throw attachmentsDeleteError
+  }
+
+  // Then delete all comments associated with the post
+  const { error: commentsDeleteError } = await supabase
+    .from('comments')
+    .delete()
+    .eq('post_id', id)
+
+  if (commentsDeleteError) {
+    throw commentsDeleteError
+  }
+
+  // Finally delete the post
+  const { error: deleteError } = await supabase
+    .from('posts')
+    .delete()
+    .eq('id', id)
+
+  if (deleteError) {
+    throw deleteError
+  }
+}
+
+
+

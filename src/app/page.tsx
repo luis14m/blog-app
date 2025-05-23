@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
-import { getPostsLimit } from "@/actions/post.client";
+import { getPostsLimit } from "@/lib/actions/post.client";
 
 export default async function Home() {
   try {
@@ -84,10 +84,10 @@ export default async function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter md:text-4xl">
-                  Últimos Proyectos
+                  Últimos Post
                 </h2>
                 <p className="mx-auto max-w-[700px] text-muted-foreground">
-                  Descubre los últimos proyectos.
+                  Descubre los últimos post.
                 </p>
               </div>
             </div>

@@ -25,13 +25,11 @@ import {
 } from "./ui/form";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
 import { createClient } from "@/utils/supabase/client";
 import { TYPES_MIME, type Json } from "@/types/supabase";
-import { createPost } from "@/actions/post.server";
-
-import { uploadDocuments } from "@/services/storage/uploadDocuments";
-import { createAttachment } from "@/actions/attachment.server";
+import { createPost } from "@/lib/actions/post.server";
+import { uploadFiles } from "@/lib/actions/attachment.client";
+import { createAttachment } from "@/lib/actions/attachment.server";
 import { Checkbox } from "./ui/checkbox";
 import { FileUploadZone } from "./ui/FileUploadZone";
 
@@ -44,7 +42,6 @@ const formSchema = z.object({
   content: z.any().optional(),
   archivos: z.array(z.instanceof(File)).optional(),
   published: z.boolean().default(false),
-  
 });
 
 export function NewPostSheet() {
@@ -78,52 +75,55 @@ export function NewPostSheet() {
     setIsLoading(true);
     let timeoutId: NodeJS.Timeout | null = null;
     try {
-      // Lanzar toast si tarda más de 10 segundos
       timeoutId = setTimeout(() => {
         if (isLoading) {
-          toast.error('La creación del post está tardando demasiado. Intenta de nuevo.');
+          toast.error(
+            "La creación del post está tardando demasiado. Intenta de nuevo."
+          );
           setIsLoading(false);
         }
-      }, 10000);
+      }, 3000);
 
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
       if (userError || !userData.user) {
         throw new Error("You must be logged in to create un post");
       }
       const userId = userData.user.id;
 
-      // Subir archivos al storage y crear registros en attachments
-      let uploadedDocuments = [];
-      if (values.archivos && values.archivos.length > 0) {
-        uploadedDocuments = await uploadDocuments(values.archivos);
-        for (const file of uploadedDocuments) {
-          await createAttachment({
-            user_id: userId,
-            file_name: file.name,
-            file_url: file.url,
-            file_type: file.type,
-            file_size: file.size,
-          });
-        }
-      }
-
-      // Crear el post en la tabla posts
-      await createPost(userId, {
+      // 1. Crear el post primero
+      const post = await createPost(userId, {
         title: values.title,
         content: values.content as Json,
         excerpt: values.excerpt,
         fecha: values.fecha,
-        published: values.published
+        published: values.published,
       });
+
+      // 2. Subir archivos al storage y asociarlos al post
+      if (post && post.id && values.archivos && values.archivos.length > 0) {
+        const uploadedFiles = await uploadFiles(values.archivos);
+        // Ahora tienes el post.id
+        for (const file of uploadedFiles) {
+          await createAttachment(
+            {
+              ...file,
+              post_id: post.id,
+            },
+            userId
+          );
+        }
+      }
 
       closeSheet();
       toast.success("Post creado con éxito");
       router.refresh();
       router.push("/blog");
+      setIsLoading(false);
+      if (timeoutId) clearTimeout(timeoutId);
     } catch (error: any) {
       console.error("Error:", error);
-      toast.error(error.message || 'Ocurrió un error al crear el post.');
-    } finally {
+      toast.error(error.message || "Ocurrió un error al crear el post.");
       setIsLoading(false);
       if (timeoutId) clearTimeout(timeoutId);
     }
@@ -199,8 +199,6 @@ export function NewPostSheet() {
               </FormItem>
             )}
           />
-          
-         
           <FormField
             control={form.control}
             name="content"
@@ -219,7 +217,6 @@ export function NewPostSheet() {
               </FormItem>
             )}
           />
-
           {/* Campo archivos adjuntos */}
           <FormField
             control={form.control}
@@ -230,9 +227,16 @@ export function NewPostSheet() {
                 <FormControl>
                   <FileUploadZone
                     files={Array.isArray(field.value) ? field.value : []}
-                    onFilesAdd={(files) => field.onChange([...(Array.isArray(field.value) ? field.value : []), ...files])}
+                    onFilesAdd={(files) =>
+                      field.onChange([
+                        ...(Array.isArray(field.value) ? field.value : []),
+                        ...files,
+                      ])
+                    }
                     onFileRemove={(index) => {
-                      const newFiles = Array.isArray(field.value) ? [...field.value] : [];
+                      const newFiles = Array.isArray(field.value)
+                        ? [...field.value]
+                        : [];
                       newFiles.splice(index, 1);
                       field.onChange(newFiles);
                     }}
@@ -243,8 +247,6 @@ export function NewPostSheet() {
               </FormItem>
             )}
           />
-
-          
           <FormField
             control={form.control}
             name="published"
@@ -266,7 +268,6 @@ export function NewPostSheet() {
               </FormItem>
             )}
           />
-          
           <div className="flex gap-4 mb-8">
             <SheetClose asChild>
               <Button variant="outline" disabled={isLoading}>

@@ -2,7 +2,7 @@
 // Aquí solo deben ir funciones que puedan ejecutarse en el navegador (lectura pública, fetch, etc)
 
 import { createClient } from "@/utils/supabase/client";
-import { Post } from "../types/types";
+import { Post } from "@/types/supabase";
 
 // Ejemplo: obtener posts publicados (solo lectura pública)
 export async function getPublishedPosts(): Promise<Post[]> {

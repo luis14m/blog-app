@@ -4,14 +4,16 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import TiptapEditor from "@/components/tiptap-editor";
 import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import { Loader2, ChevronDown } from "lucide-react";
-import { createCommentFromForm } from "@/actions/comment.server";
-import { getNewCommentWithAttachments, getPostCommentsPaginated } from "@/actions/comment.client";
-
+import { createCommentFromForm } from "@/lib/actions/comment.server";
+import { getNewCommentWithAttachments, getPostCommentsPaginated } from "@/lib/actions/comment.client";
+import {FileUploadZone} from "@/components/ui/FileUploadZone";
+import { TYPES_MIME } from "@/types/supabase";
+import { createAttachment } from "@/lib/actions/attachment.server";
+import { uploadFiles } from "@/lib/actions/attachment.client";
 
 interface CommentsProps {
   postId: string;
@@ -228,6 +230,7 @@ export default function Comments({ postId }: CommentsProps) {
     loadComments(page + 1, true);
   }, [loadComments, page, hasMore, loadingMore]);
 
+  // Manejar el envío del formulario OnSubmit
   const handleSubmitComment = async (formData: FormData) => {
     if (!user) {
       console.error("Debes iniciar sesión para comentar");
@@ -254,9 +257,27 @@ export default function Comments({ postId }: CommentsProps) {
     try {
       formData.append('userId', user.id);
       formData.append('content', JSON.stringify(content));
+      formData.append('postId', postId);
       
-      await createCommentFromForm(formData);
-      console.log("Comentario agregado correctamente");
+      // 1. Crear el comentario y obtener el ID
+      const createdComment = await createCommentFromForm(formData);
+      const commentId = createdComment.id;
+
+      // 2. Subir archivos al storage y asociarlos al comentario
+      if (attachments && attachments.length > 0) {
+        // uploadFiles espera un array de File, pero attachments puede tener File u objeto. Filtrar solo File.
+        const filesToUpload = attachments.filter((a) => a instanceof File);
+        if (filesToUpload.length > 0) {
+          const uploadedFiles = await uploadFiles(filesToUpload, { type: "comments" });
+          for (const file of uploadedFiles) {
+            await createAttachment({
+              ...file,
+              comment_id: commentId,
+            }, 
+            user.id);
+          }
+        }
+      }
       
       // Limpiar el editor después de enviar
       setContent("");
@@ -279,14 +300,6 @@ export default function Comments({ postId }: CommentsProps) {
     }
   };
 
-  const handleAttachmentRequest = () => {
-    setShowUploaderDialog(true);
-  };
-
-  const handleUploadComplete = (files: any[]) => {
-    setAttachments((prev) => [...prev, ...files]);
-    setShowUploaderDialog(false);
-  };
 
   const isValidComment = useCallback(() => {
     // Si es un objeto JSON vacío, podría parecer que tiene contenido
@@ -345,51 +358,27 @@ export default function Comments({ postId }: CommentsProps) {
               <TiptapEditor
                 content={content}
                 onChange={setContent}
-                onAttachmentRequest={handleAttachmentRequest}
                 placeholder="Escribe un comentario..."
                 immediatelyRender={false}
                 key={`editor-${comments.length}`}
               />
               <input type="hidden" name="content" value={JSON.stringify(content)} />
               
-              {attachments.length > 0 && (
-                <div className="space-y-2 border p-3 rounded-md">
-                  <h4 className="text-sm font-medium">Archivos adjuntos</h4>
-                  <div className="space-y-2">
-                    {attachments.map((attachment) => (
-                      <div
-                        key={attachment.id}
-                        className="flex items-center justify-between text-sm p-2 border rounded-md"
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className="h-6 w-6 bg-muted flex items-center justify-center rounded">
-                            {attachment.file_type.startsWith("image/") ? (
-                              <img
-                                src={supabase.storage.from("attachments").getPublicUrl(attachment.file_path).data?.publicUrl}
-                                alt={attachment.file_name}
-                                className="h-6 w-6 object-cover rounded"
-                              />
-                            ) : (
-                              <span className="text-xs">{attachment.file_type.split("/")[1]?.toUpperCase() || "FILE"}</span>
-                            )}
-                          </div>
-                          <span className="truncate max-w-xs">{attachment.file_name}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setAttachments(attachments.filter((a) => a.id !== attachment.id));
-                          }}
-                        >
-                          Eliminar
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Zona de subida de archivos */}
+              <FileUploadZone
+                files={attachments}
+                onFilesAdd={(files) =>
+                  setAttachments((prev) => [...prev, ...files])
+                }
+                onFileRemove={(index) => {
+                  setAttachments((prev) => {
+                    const newFiles = [...prev];
+                    newFiles.splice(index, 1);
+                    return newFiles;
+                  });
+                }}
+                accept={TYPES_MIME}
+              />
               
               <div className="flex justify-end gap-2">
                 <Button

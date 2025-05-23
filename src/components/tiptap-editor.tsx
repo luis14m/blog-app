@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Toggle } from "@/components/ui/toggle";
@@ -38,7 +39,7 @@ interface TiptapEditorProps {
 }
 
 export default function TiptapEditor(props: TiptapEditorProps) {
-  const { content, onChange, editorClass } = props;
+  const { content, onChange, editorClass, placeholder } = props;
   const [linkUrl, setLinkUrl] = useState("");
   const [linkOpen, setLinkOpen] = useState(false);
 
@@ -78,6 +79,9 @@ export default function TiptapEditor(props: TiptapEditorProps) {
         HTMLAttributes: {
           class: "rounded-md max-w-full",
         },
+      }),
+      Placeholder.configure({
+        placeholder: placeholder || "Escribe algo...",
       }),
     ],
     content: content,
@@ -248,7 +252,7 @@ export default function TiptapEditor(props: TiptapEditorProps) {
               id="link-url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://ejemplo.com"
+              placeholder="https://ejemplo.cl"
             />
             <Button onClick={addLink}>Agregar</Button>
           </DialogContent>

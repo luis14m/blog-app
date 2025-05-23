@@ -1,6 +1,7 @@
-"use server";
+'use server'
 import { createClient } from "@/utils/supabase/server";
-import { Profile } from "../types/types";
+import { Profile } from "@/types/supabase";
+import { ProfileUpdate } from "@/types/supabase";
 
 
 // Crear un nuevo perfil
@@ -26,7 +27,7 @@ export async function createProfile(userId: string, email: string): Promise<Prof
 }
 
 // Actualizar un perfil
-export async function updateProfile(id: string, data:Profile): Promise<Profile> {
+export async function updateProfile(id: string, data:ProfileUpdate): Promise<Profile> {
   const supabase = await createClient();
   const { data: profile, error } = await supabase
     .from("profiles")
@@ -50,3 +51,26 @@ export async function deleteProfile(id: string): Promise<void> {
     .eq("id", id);
   if (error) throw error;
 }
+
+// Obtener usuario y perfil (para Server Component)
+export async function getUserAndProfile() {
+  const supabase = await createClient();
+  // Obtener usuario autenticado y validado
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error) {
+    return { user: null, profile: null };
+  }
+  let profile = null;
+  if (user) {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    if (!error && data) {
+      profile = data;
+    }
+  }
+  return { user, profile };
+}
+

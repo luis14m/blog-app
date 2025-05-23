@@ -1,26 +1,26 @@
 'use server'
-import { Attachment } from "@/types/supabase";
+import { Attachment, AttachmentInsert } from "@/types/supabase";
 import { createClient } from "@/utils/supabase/server";
 
-
-export async function createAttachment(attachment: {
-  file_url: string;
-  file_name: string;
-  file_type: string;
-  file_size: number;
-  user_id: string;
-  post_id?: string;
-  comment_id?: string;
-}): Promise<Attachment> {
+// Create a new attachment in the database
+// and return the created attachment
+// with the ID and other properties
+export async function createAttachment(
+  attachment: AttachmentInsert,
+  userId: string
+): Promise<Attachment> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("attachments")
-    .insert(attachment)
+    .insert({ ...attachment, 
+      user_id: userId,
+    })
     .select()
     .single();
 
   if (error) throw error;
+  if (!data) throw new Error("Attachment not created");
   return data;
 }
 
