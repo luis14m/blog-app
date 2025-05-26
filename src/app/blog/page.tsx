@@ -33,7 +33,7 @@ export default async function BlogPage() {
                     <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback>
-                          {(post.profiles?.display_name || post.profiles?.username || "User")
+                          {(post.profiles?.display_name)
                             .charAt(0)
                             .toUpperCase()}
                         </AvatarFallback>
@@ -41,9 +41,7 @@ export default async function BlogPage() {
                     </div>
                     <div className="text-sm">
                       <p className="font-medium">
-                        {post.profiles?.display_name ||
-                          post.profiles?.username ||
-                          "Anonymous"}
+                        {post.profiles?.display_name}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {new Date(post.created_at).toLocaleDateString()}

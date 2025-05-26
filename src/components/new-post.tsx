@@ -118,7 +118,7 @@ export function NewPostSheet() {
       closeSheet();
       toast.success("Post creado con éxito");
       router.refresh();
-      redirect('/blog');
+      redirect("/blog");
       setIsLoading(false);
       if (timeoutId) clearTimeout(timeoutId);
     } catch (error: any) {
@@ -147,10 +147,10 @@ export function NewPostSheet() {
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Título del Proyecto</FormLabel>
+                <FormLabel>Título del Post</FormLabel>
                 <FormControl>
                   <Input
-                    placeholder="Introduce el título de tu proyecto"
+                    placeholder="Introduce el título del post"
                     {...field}
                   />
                 </FormControl>
@@ -159,6 +159,25 @@ export function NewPostSheet() {
               </FormItem>
             )}
           />
+          <FormField
+            control={form.control}
+            name="fecha"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Fecha Inicio</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    className="w-full md:w-[150px]"
+                    {...field}
+                    placeholder="Selecciona una fecha"
+                  />
+                </FormControl>
+                <FormDescription>Fecha de inicio del proyecto.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />{" "}
           <FormField
             control={form.control}
             name="excerpt"
@@ -176,25 +195,6 @@ export function NewPostSheet() {
                   Un resumen corto que describe los aspectos principales del
                   proyecto.
                 </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />{" "}
-          <FormField
-            control={form.control}
-            name="fecha"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fecha</FormLabel>
-                <FormControl>
-                  <Input
-                    type="date"
-                    className="w-full md:w-[150px]"
-                    {...field}
-                    placeholder="Selecciona una fecha"
-                  />
-                </FormControl>
-                <FormDescription>Fecha de inicio del proyecto.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}

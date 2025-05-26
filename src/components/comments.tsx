@@ -41,9 +41,11 @@ const commentsCache = new Map<
 // Tiempo de expiración del caché en milisegundos (5 minutos)
 const CACHE_EXPIRY = 5 * 60 * 1000;
 
+const EMPTY_CONTENT = { type: "doc", content: [{ type: "paragraph" }] };
+
 export default function Comments({ postId }: CommentsProps) {
   const [comments, setComments] = useState<Comment[]>([]);
-  const [content, setContent] = useState("");
+  const [content, setContent] = useState(EMPTY_CONTENT);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -308,7 +310,7 @@ export default function Comments({ postId }: CommentsProps) {
           }
           return [commentWithAttachments as Comment, ...prev];
         });
-        setContent(""); // Limpiar solo tras éxito
+        setContent(EMPTY_CONTENT); // Limpiar solo tras éxito
         setAttachments([]);
         if (formRef.current) formRef.current.reset();
       }
@@ -344,7 +346,7 @@ export default function Comments({ postId }: CommentsProps) {
         // Eliminar duplicados si el real ya está en la lista
         return newArr.filter((c, i) => newArr.findIndex((x) => x.id === c.id) === i);
       });
-      setContent("");
+      setContent(EMPTY_CONTENT);
       setAttachments([]);
       if (formRef.current) formRef.current.reset();
     }

@@ -117,8 +117,10 @@ export async function uploadFiles(
     
     const safeFileName = encodeURIComponent(file.name);
     
-    // Estructura: /posts|comments/user.id/archivo.ext
-    const filePath = `${type}/${user.id}/${safeFileName}`;
+    // Estructura: /posts|comments/user.id/fecha/archivo.ext
+    // Create a unique folder for each upload session using user_id
+      const timestamp = Date.now();
+      const filePath = `${type}/${user.id}/${timestamp}/${safeFileName}`;
 
     const { error } = await supabase.storage
       .from(options?.bucketName || "attachments")

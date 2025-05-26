@@ -109,36 +109,38 @@ export default function ProfilePage() {
         </div>
 
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-8">
-          <div className="space-y-2">
-            <Label htmlFor="displayName" className="mb-2">
-              Nombre Apellido
-            </Label>
-            <Input
-              id="displayName"
-              {...form.register("displayName")}
-              className="mb-2"
-            />
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2 w-full max-w-xs">
+              <Label htmlFor="displayName" className="mb-0 w-32 text-left">
+                Nombre:
+              </Label>
+              <Input
+                id="displayName"
+                placeholder="Nombre Apellido"
+                {...form.register("displayName")}
+                className="mb-0 w-full"
+              />
+            </div>
             {form.formState.errors.displayName && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-red-500 w-full max-w-xs ml-32">
                 {form.formState.errors.displayName.message}
               </p>
             )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="username" className="mb-2">
-              Email
-            </Label>
-            <Input id="username" {...form.register("username")} className="mb-2" />
+            <div className="flex items-center gap-2 w-full max-w-xs">
+              <Label htmlFor="username" className="mb-0 w-32 text-left">
+                Email:
+              </Label>
+              <Input id="username" {...form.register("username")} className="mb-0 w-full" />
+            </div>
             {form.formState.errors.username && (
-              <p className="text-sm text-red-500">
+              <p className="text-sm text-red-500 w-full max-w-xs ml-32">
                 {form.formState.errors.username.message}
               </p>
             )}
+            <Button type="submit" className="w-full max-w-xs mx-auto block" disabled={isSaving}>
+              {isSaving ? "Guardando..." : "Guardar cambios"}
+            </Button>
           </div>
-
-          <Button type="submit" className="w-full" disabled={isSaving}>
-            {isSaving ? "Guardando..." : "Guardar cambios"}
-          </Button>
         </form>
       </Card>
     </div>
