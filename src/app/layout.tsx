@@ -10,8 +10,8 @@ import { Toaster } from "@/components/ui/sonner";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Modern Blog",
-  description: "A modern blog built with Next.js and Supabase",
+  title: "Blog KLV",
+  description: "App in Next.js and Supabase",
 };
 
 export default function RootLayout({
