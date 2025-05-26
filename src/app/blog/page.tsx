@@ -1,8 +1,6 @@
 
 import Link from "next/link";
 import { getPublishedPosts } from "@/lib/actions/post.client";
-import { NewPostButton } from "@/components/new-post-button";
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default async function BlogPage() {

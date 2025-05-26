@@ -120,7 +120,7 @@ export default function EditPostPage(props: PageProps) {
         excerpt: values.excerpt || "",
         fecha: values.fecha || "",
         published: values.published,
-        content: values.content, // Esto será JSON, compatible con jsonb
+        content: values.content as Json, // Esto será JSON, compatible con jsonb
       });
       const updatedPost = await getPostById(id);
       toast.success("Post updated successfully");

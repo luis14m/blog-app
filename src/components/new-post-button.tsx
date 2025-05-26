@@ -14,7 +14,7 @@ export function NewPostButton({ user }: { user: any }) {
       <SheetTrigger asChild>
         <Button size="sm" disabled={!user} variant="default">
           <PlusIcon className="mr-2 h-4 w-4" />
-          {user ? "New Post" : "Login to Post"}
+          {user ? "Crear Post" : "Login to Post"}
         </Button>
       </SheetTrigger>
       <NewPostSheet />

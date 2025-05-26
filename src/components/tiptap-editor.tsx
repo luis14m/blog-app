@@ -252,7 +252,7 @@ export default function TiptapEditor(props: TiptapEditorProps) {
               id="link-url"
               value={linkUrl}
               onChange={(e) => setLinkUrl(e.target.value)}
-              placeholder="https://ejemplo.cl"
+              placeholder="www.ejemplo.cl"
             />
             <Button onClick={addLink}>Agregar</Button>
           </DialogContent>

@@ -23,7 +23,7 @@ import {
   FormLabel,
   FormMessage,
 } from "./ui/form";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { TYPES_MIME, type Json } from "@/types/supabase";
@@ -118,7 +118,7 @@ export function NewPostSheet() {
       closeSheet();
       toast.success("Post creado con éxito");
       router.refresh();
-      router.push("/blog");
+      redirect('/blog');
       setIsLoading(false);
       if (timeoutId) clearTimeout(timeoutId);
     } catch (error: any) {
@@ -137,7 +137,7 @@ export function NewPostSheet() {
     >
       <SheetHeader>
         <SheetTitle>Nueva Publicacion</SheetTitle>
-        <SheetDescription>Detalles de la obra o proyecto.</SheetDescription>
+        <SheetDescription>Detalles de la publicacion.</SheetDescription>
       </SheetHeader>
 
       <Form {...form}>

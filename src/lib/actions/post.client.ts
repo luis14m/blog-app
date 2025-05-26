@@ -68,7 +68,6 @@ export async function getPostsLimit(limit: number): Promise<Post[]> {
 }
 
 
-
 export async function getPostById(id: string): Promise<Post | null> {
   const supabase = await createClient();
 

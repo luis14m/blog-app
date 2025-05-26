@@ -76,7 +76,6 @@ export type Database = {
           id: string
           content: Json
           created_at: string
-          updated_at: string
           user_id: string
           post_id: string
         }
@@ -84,7 +83,6 @@ export type Database = {
           id?: string
           content?: Json
           created_at?: string
-          updated_at?: string
           user_id: string
           post_id: string
         }
@@ -92,7 +90,6 @@ export type Database = {
           id?: string
           content?: Json
           created_at?: string
-          updated_at?: string
           user_id?: string
           post_id?: string
         }
@@ -201,8 +198,8 @@ export type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
 export type AttachmentInsert = Database["public"]["Tables"]["attachments"]["Insert"];
 
 export type Comment = Database["public"]["Tables"]["comments"]["Row"] & {
-    profiles: Database["public"]["Tables"]["profiles"]["Row"] | null;
-    attachments: Database["public"]["Tables"]["attachments"]["Row"][];
+    profiles?: Database["public"]["Tables"]["profiles"]["Row"] | null;
+    attachments?: Database["public"]["Tables"]["attachments"]["Row"][];
 };
 
 export type Post = Database["public"]["Tables"]["posts"]["Row"] & {

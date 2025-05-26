@@ -65,7 +65,7 @@ export async function getPostBySlug(slug: string): Promise<Post | null> {
 
 
 export async function updatePost(id: string, data: PostUpdate) {
-  const { title, content, excerpt, fecha, published } = data;
+  const { title } = data;
 
   const supabase = await createClient();
 
@@ -97,12 +97,9 @@ export async function updatePost(id: string, data: PostUpdate) {
   const { error: updateError } = await supabase
     .from('posts')
     .update({
-      title,
-      content,
-      excerpt: excerpt || null,
-      fecha: fecha || null,
+      ...data,
       slug,
-      published,
+      updated_at: new Date().toISOString()
     })
     .eq('id', id);
 

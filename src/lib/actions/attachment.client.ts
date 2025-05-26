@@ -94,7 +94,6 @@ export async function downloadFile(publicUrl: string): Promise<boolean> {
   }
 }
 
-import { getCurrentUserDisplayName } from "@/lib/actions/profile.client";
 
 // Subir archivos a Supabase Storage
 export async function uploadFiles(
@@ -105,21 +104,21 @@ export async function uploadFiles(
   }
 ) {
   const supabase = createClient();
-  const user = await supabase.auth.getUser();
- console.log({user});
-  if (!user.data.user) {
-    throw new Error("You must be logged in to upload files");
-  }
 
-  // Obtener display_name
-  const displayName = await getCurrentUserDisplayName();
+  const { data: { user } } = await supabase.auth.getUser();
+    
+  if (!user) {
+    throw new Error('User not authenticated');
+  }
+ 
   const type = options?.type || "posts";
 
   const uploadPromises = files.map(async (file) => {
+    
     const safeFileName = encodeURIComponent(file.name);
     
-    // Estructura: /posts|comments/display_name/archivo.ext
-    const filePath = `${type}/${user}/${safeFileName}`;
+    // Estructura: /posts|comments/user.id/archivo.ext
+    const filePath = `${type}/${user.id}/${safeFileName}`;
 
     const { error } = await supabase.storage
       .from(options?.bucketName || "attachments")
@@ -130,19 +129,19 @@ export async function uploadFiles(
 
     if (error) throw error;
 
-    const publicUrlData = supabase.storage
+    const { data: { publicUrl } } = supabase.storage
       .from(options?.bucketName || "attachments")
       .getPublicUrl(filePath);
-    // Corrige el doble encoding de espacios
-    let file_url = publicUrlData.data?.publicUrl || null;
+   // Reemplazar %2520 por %20
+      const correctedUrl = publicUrl.replace(/%2520/g, '%20');
    
 
     return {
       file_name: file.name,
       file_type: file.type,
       file_size: file.size,
-      file_url,
-      user_id: user.data.user.id,
+      file_url: correctedUrl,
+      user_id: user.id,
       file_path: filePath,
     };
   });

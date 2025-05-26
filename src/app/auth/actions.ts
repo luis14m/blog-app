@@ -31,7 +31,7 @@ export async function login(formData: FormData) {
   revalidatePath('/dashboard')
   revalidatePath('/profile')
 
-  redirect('/blog')
+  redirect('/')
   
 }
 

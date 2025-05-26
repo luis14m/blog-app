@@ -8,11 +8,11 @@ import { PenSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
-import { generateHTML } from "@tiptap/html";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
+
 import { getPostBySlug } from "@/lib/actions/post.server";
 import { getPostAttachments } from "@/lib/actions/attachment.server";
+import { getHTMLFromContent } from "@/lib/utils";
+import { formatFileSize } from "@/lib/utils";
 
 export default async function BlogPostPage(props: {
   params: Promise<{ slug: string }>;
@@ -112,17 +112,13 @@ export default async function BlogPostPage(props: {
 
         {/* Post content */}
         <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
-          {/* Renderiza el contenido como HTML si es string, o usa generateHTML si es JSON */}
-          {typeof post.content === "string" &&
-          post.content.trim().startsWith("<") ? (
-            <div dangerouslySetInnerHTML={{ __html: post.content }} />
-          ) : (
-            <div
-              dangerouslySetInnerHTML={{
-                __html: getHTMLFromContent(post.content),
-              }}
-            />
-          )}
+          {/* Renderiza el contenido generateHTML si es JSON */}
+
+          <div
+            dangerouslySetInnerHTML={{
+              __html: getHTMLFromContent(post.content),
+            }}
+          />
         </div>
 
         {/* Post attachments */}
@@ -213,43 +209,4 @@ function CommentSkeleton() {
       </div>
     </div>
   );
-}
-
-// Helper function to extract HTML from the content JSON using TipTap
-function getHTMLFromContent(content: any): string {
-  try {
-    if (typeof content === "string") {
-      return content;
-    }
-    if (content) {
-      return generateHTML(content, [
-        StarterKit.configure({
-          heading: {
-            levels: [1, 2, 3, 4, 5, 6],
-          },
-          bulletList: {
-            HTMLAttributes: {
-              class: "list-disc ml-4",
-            },
-          },
-          orderedList: {
-            HTMLAttributes: {
-              class: "list-decimal ml-4",
-            },
-          },
-        }),
-        Image,
-      ]);
-    }
-    return "No content available";
-  } catch (error) {
-    console.error("Error parsing content:", error);
-    return "Error displaying content";
-  }
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + " B";
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-  return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }

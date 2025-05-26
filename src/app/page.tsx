@@ -2,10 +2,12 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { PenSquare, BookOpen, MessageSquare, Users } from "lucide-react";
 import { getPostsLimit } from "@/lib/actions/post.client";
+import { NewPostButton } from "@/components/new-post-button";
+import { getUserAndProfile } from "@/lib/actions/profile.server";
 
 export default async function Home() {
   try {
-    
+    const { user } = await getUserAndProfile();
     const latestPosts = await getPostsLimit(3);
     return (
       <div className="flex flex-col min-h-[calc(100vh-4rem)]">
@@ -15,25 +17,21 @@ export default async function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl md:text-6xl">
-                  Comparte tus proyectos
+                  Comparte una Publicacion
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Una plataforma donde puedes crear, compartir y discutir ideas sobre las Obras en Ejecucion de construcción a través de contenido detallado y conversaciones significativas.
+                  Una plataforma para registrar las Obras en Ejecucion.
                 </p>
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
-                <Button asChild size="lg">
+                <Button asChild size="sm">
                   <Link href="/blog" >
                     <BookOpen className="mr-2 h-4 w-4" />
-                    Explorar Proyectos
+                    Explorar Posts
                   </Link>
                 </Button>
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/blog" >
-                    <PenSquare className="mr-2 h-4 w-4" />
-                    Compartir Proyecto
-                  </Link>
-                </Button>
+                {/* Botón para nueva publicación */}
+                <NewPostButton user={user} />
               </div>
             </div>
           </div>
@@ -129,7 +127,7 @@ export default async function Home() {
                 ))
               ) : (
                 <div className="col-span-3 text-center py-12">
-                  <p className="text-muted-foreground">Aún no hay proyectos publicados. 
+                  <p className="text-muted-foreground">Aún no hay posts publicados. 
                     ¡Sé el primero en compartir uno!</p>
                 </div>
               )}
@@ -138,7 +136,7 @@ export default async function Home() {
             <div className="flex justify-center mt-8">
               <Button asChild variant="outline">
                 <Link href="/blog">
-                  Ver todos los proyectos
+                  Ver todos los Post
                 </Link>
               </Button>
             </div>
@@ -150,7 +148,7 @@ export default async function Home() {
     console.error('Error al cargar los posts más recientes:', error);
     return (
       <div className="container mx-auto px-4">
-        <h1>Lo sentimos, hubo un error al cargar los proyectos</h1>
+        <h1>Lo sentimos, hubo un error al cargar los posts</h1>
       </div>
     );
   }

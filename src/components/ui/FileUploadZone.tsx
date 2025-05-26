@@ -61,7 +61,7 @@ export function FileUploadZone({
               <span className="text-white-500">Clic para seleccionar</span>
               <br />
               <span className="text-xs text-gray-500">
-                PDF, Word, Excel o imágenes (Máx. 50MB por archivo)
+                Imagenes o PDF, Word, Excel (Máx. 5 MB por archivo)
               </span>
             </>
           )}
