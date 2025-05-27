@@ -5,6 +5,8 @@ import { getPostsLimit } from "@/lib/actions/post.client";
 import { NewPostButton } from "@/components/new-post-button";
 import { getUserAndProfile } from "@/lib/actions/profile.server";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   try {
     const { user } = await getUserAndProfile();

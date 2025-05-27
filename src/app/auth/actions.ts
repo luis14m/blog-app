@@ -66,7 +66,7 @@ export async function signup(formData: FormData) {
   revalidatePath('/dashboard')
   revalidatePath('/profile')
   
-  redirect(redirectTo)
+  redirect('/profile')
 }
 
 export async function signOut() {
