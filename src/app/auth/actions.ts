@@ -11,7 +11,7 @@ export async function login(formData: FormData) {
   const supabase = await createClient()
 
   // Obtener la URL de origen si existe
-  const redirectTo = formData.get('redirectTo') as string || '/'
+  const redirectTo = formData.get('redirectTo') as string || '/blog'
 
   const data = {
     email: formData.get('email') as string,
@@ -31,7 +31,7 @@ export async function login(formData: FormData) {
   revalidatePath('/dashboard')
   revalidatePath('/profile')
 
-  redirect('/')
+  redirect(redirectTo)
   
 }
 

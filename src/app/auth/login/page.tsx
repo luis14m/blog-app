@@ -105,7 +105,7 @@ export default function LoginPage() {
                       <div className="relative">
                         <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input 
-                          placeholder="tu@email.com" 
+                          placeholder="nombre@email.com" 
                           type="email"
                           autoComplete="email"
                           className="pl-10"
@@ -153,7 +153,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 border-t pt-6">
           <div className="text-sm text-center">
-            <span>¿No tienes cuenta? <Button variant="link" className="p-0" onClick={() => router.push("/auth/signup")}>Crear cuenta</Button></span>
+            <span>¿No tienes cuenta? <Button variant="link" className="p-0 underline" onClick={() => router.push("/auth/signup")}>Crear cuenta</Button></span>
           </div>
         </CardFooter>
       </Card>
