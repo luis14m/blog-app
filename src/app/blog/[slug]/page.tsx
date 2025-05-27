@@ -127,6 +127,24 @@ export default async function BlogPostPage(props: {
             <h3 className="text-xl font-bold mb-4">Archivos Adjuntos</h3>
             <div className="grid gap-2">
               {attachments.map((attachment) => {
+                // Mostrar extension del archivo
+                let fileTypeLabel = "FILE";
+                if (
+                  attachment.file_type ===
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                  attachment.file_type === "application/vnd.ms-excel"
+                ) {
+                  fileTypeLabel = "XLSX";
+                } else if (
+                  attachment.file_type ===
+                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+                  attachment.file_type === "application/msword"
+                ) {
+                  fileTypeLabel = "DOCX";
+                } else if (attachment.file_type) {
+                  const parts = attachment.file_type.split("/");
+                  if (parts.length > 1) fileTypeLabel = parts[1].toUpperCase();
+                }
                 // Usar directamente attachment.file_url como href
                 return (
                   <a
@@ -134,6 +152,7 @@ export default async function BlogPostPage(props: {
                     href={attachment.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
+                    style={{ width: "fit-content", maxWidth: "100%" }}
                     className="flex items-center gap-2 p-2 border rounded-md hover:bg-accent/50 transition-colors"
                   >
                     <div className="h-8 w-8 bg-muted flex items-center justify-center rounded">
@@ -144,10 +163,10 @@ export default async function BlogPostPage(props: {
                           className="h-8 w-8 object-cover rounded"
                         />
                       ) : (
-                        <span className="text-xs">&nbsp;</span>
+                        <span className="text-xs">{fileTypeLabel}</span>
                       )}
                     </div>
-                    <span className="flex-1 truncate">
+                    <span className="truncate max-w-[160px]">
                       {attachment.file_name}
                     </span>
                     <span className="text-xs text-muted-foreground">
