@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { PostInsert, Post, PostUpdate } from '@/types/supabase';
 
 import { generateSlug } from "@/lib/utils";
+import { revalidatePath } from "next/cache";
 
 export async function createPost(
   userId: string,
@@ -207,7 +208,8 @@ export async function deletePost(id: string) {
   if (deleteError) {
     throw deleteError
   }
-  
+  revalidatePath('/dashboard'); // Revalidate the post page after deletion
+  revalidatePath('/blog'); // Revalidate the posts list page
 }
 
 
