@@ -28,10 +28,11 @@ import { toast } from "sonner";
 import { createClient } from "@/utils/supabase/client";
 import { TYPES_MIME, type Json } from "@/types/supabase";
 import { createPost } from "@/lib/actions/post.server";
-import { uploadFiles } from "@/lib/actions/attachment.client";
+
 import { createAttachment } from "@/lib/actions/attachment.server";
-import { Checkbox } from "./ui/checkbox";
-import { FileUploadZone } from "./ui/FileUploadZone";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FileUploadZone } from "@/components/ui/FileUploadZone";
+import { uploadFiles } from "@/lib/actions/attachment.client";
 
 const formSchema = z.object({
   title: z
@@ -65,7 +66,6 @@ export function NewPostSheet() {
       fecha: "",
       content: "",
       archivos: [],
-
       published: false,
     },
   });

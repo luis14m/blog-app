@@ -17,17 +17,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
 import TiptapEditor from "@/components/tiptap-editor";
-
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-
 import { Loader2 } from "lucide-react";
-
 import { updatePost } from "@/lib/actions/post.server";
 import { getPostById } from "@/lib/actions/post.client";
 import type { Database, Json } from "@/types/supabase";
+import { FileUploadZone } from "@/components/ui/FileUploadZone";
+import { uploadFiles } from "@/lib/actions/attachment.client";
+import { TYPES_MIME } from "@/types/supabase";
+import { createAttachment } from "@/lib/actions/attachment.server";
 
 type Post = Database["public"]["Tables"]["posts"]["Row"];
 
@@ -42,6 +42,7 @@ const formSchema = z.object({
   excerpt: z.string().max(200).optional(),
   fecha: z.string().optional(),
   content: z.any().optional(),
+  archivos: z.array(z.instanceof(File)).optional(),
   published: z.boolean().default(false),
 });
 
@@ -62,8 +63,9 @@ export default function EditPostPage(props: PageProps) {
       title: "",
       excerpt: "",
       fecha: "",
-      published: false,
       content: "",
+      archivos: [],
+      published: false,
     },
   });
   useEffect(() => {
@@ -110,9 +112,15 @@ export default function EditPostPage(props: PageProps) {
 
     getPost();
   }, [id, router, form]);
-  
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
+    const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+      if (userError || !userData.user) {
+        throw new Error("You must be logged in to update a post");
+      }
+      const userId = userData.user.id;
     try {
       // Envía los datos como objeto plano, igual que new-post
       await updatePost(id, {
@@ -123,6 +131,20 @@ export default function EditPostPage(props: PageProps) {
         content: values.content as Json, // Esto será JSON, compatible con jsonb
       });
       const updatedPost = await getPostById(id);
+      // 2. Subir archivos al storage y asociarlos al post
+      if (updatedPost && updatedPost.id && values.archivos && values.archivos.length > 0) {
+        const uploadedFiles = await uploadFiles(values.archivos);
+        // Ahora tienes el updatedPost.id
+        for (const file of uploadedFiles) {
+          await createAttachment(
+            {
+              ...file,
+              post_id: updatedPost.id,
+            },
+            userId
+          );
+        }
+      }
       toast.success("Post updated successfully");
       router.push(`/blog/${updatedPost.slug}`);
     } catch (error: any) {
@@ -163,7 +185,7 @@ export default function EditPostPage(props: PageProps) {
             name="fecha"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Fecha </FormLabel>
+                <FormLabel>Date </FormLabel>
                 <FormControl>
                   <Input
                     type="date"
@@ -204,13 +226,43 @@ export default function EditPostPage(props: PageProps) {
             name="content"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Contenido del Post</FormLabel>
+                <FormLabel>Content</FormLabel>
                 <FormControl>
                   <TiptapEditor
                     content={field.value}
                     onChange={field.onChange}
                     editorClass="max-h-[400px]"
                     immediatelyRender={false}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          {/* Campo archivos adjuntos */}
+          <FormField
+            control={form.control}
+            name="archivos"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Subir archivos</FormLabel>
+                <FormControl>
+                  <FileUploadZone
+                    files={Array.isArray(field.value) ? field.value : []}
+                    onFilesAdd={(files) =>
+                      field.onChange([
+                        ...(Array.isArray(field.value) ? field.value : []),
+                        ...files,
+                      ])
+                    }
+                    onFileRemove={(index) => {
+                      const newFiles = Array.isArray(field.value)
+                        ? [...field.value]
+                        : [];
+                      newFiles.splice(index, 1);
+                      field.onChange(newFiles);
+                    }}
+                    accept={TYPES_MIME}
                   />
                 </FormControl>
                 <FormMessage />

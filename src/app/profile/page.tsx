@@ -12,6 +12,7 @@ import { Card } from "@/components/ui/card";
 import { updateProfile } from "@/lib/actions/profile.server";
 import { createClient } from "@/utils/supabase/client";
 import { getProfileById } from "@/lib/actions/profile.client";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   username: z.string().min(5).max(50),
@@ -88,7 +89,7 @@ export default function ProfilePage() {
       };
 
       await updateProfile(user.id, profileData);
-      console.log("Profile updated successfully");
+      toast.success("Profile updated successfully");
     } catch (error: any) {
       console.error(error.message || "Failed to update profile");
     } finally {

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getPublishedPosts } from "@/lib/actions/post.client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import React, { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { MessageSquareText, Search } from "lucide-react";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
@@ -37,7 +37,7 @@ export default function BlogPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <p className="text-muted-foreground">Cargando posts...</p>
+       {/* <p className="text-muted-foreground">Cargando posts...</p> */}
       </div>
     );
   }
@@ -105,6 +105,7 @@ export default function BlogPage() {
                     <p className="text-xs text-muted-foreground">
                       {new Date(post.created_at).toLocaleDateString()}
                     </p>
+                    
                   </div>
                 </div>
               </div>

@@ -197,6 +197,8 @@ export type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
 
 export type AttachmentInsert = Database["public"]["Tables"]["attachments"]["Insert"];
 
+export type AttachmentUpdate = Database["public"]["Tables"]["attachments"]["Update"];
+
 export type Comment = Database["public"]["Tables"]["comments"]["Row"] & {
     profiles?: Database["public"]["Tables"]["profiles"]["Row"] | null;
     attachments?: Database["public"]["Tables"]["attachments"]["Row"][];

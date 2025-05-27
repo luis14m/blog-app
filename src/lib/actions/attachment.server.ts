@@ -52,3 +52,21 @@ export async function getPostAttachments(postId: string): Promise<Attachment[]> 
   return data || [];
 }
 
+export async function updateAttachment(
+  attachment: AttachmentInsert,
+  userId: string
+): Promise<Attachment> {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("attachments")
+    .update({ ...attachment, 
+      user_id: userId,
+    })
+    .select()
+    .single();
+
+  if (error) throw error;
+  if (!data) throw new Error("Attachment not created");
+  return data;
+}

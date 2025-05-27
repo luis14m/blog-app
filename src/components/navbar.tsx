@@ -22,6 +22,7 @@ import Image from "next/image";
 import { getUserAndProfile } from "@/lib/actions/profile.server";
 import { NewPostButton } from "@/components/new-post-button";
 import { LogoutButton } from "./logout-button";
+import { LayoutDashboard, User } from "lucide-react";
 
 export default async function Navbar() {
   // Obtener usuario y perfil en el server
@@ -98,10 +99,14 @@ export default async function Navbar() {
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href="/profile">Profile</Link>
+                    <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    Profile</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/dashboard">Dashboard</Link>
+                    <Link href="/dashboard">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Dashboard</Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
