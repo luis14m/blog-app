@@ -207,6 +207,7 @@ export async function deletePost(id: string) {
   if (deleteError) {
     throw deleteError
   }
+  
 }
 
 
