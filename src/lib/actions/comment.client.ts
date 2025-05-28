@@ -1,8 +1,7 @@
 // Acciones de CLIENTE para comments
 import { createClient } from "@/utils/supabase/client";
-import { Database } from "@/types/supabase";
+import { Comment} from "@/types/supabase";
 
-export type Comment = Database["public"]["Tables"]["comments"]["Row"];
 
 // Obtener comment público por ID
 export async function getCommentById(id: string): Promise<Comment | null> {

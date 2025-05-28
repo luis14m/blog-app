@@ -212,6 +212,7 @@ export default function TiptapEditor(props: TiptapEditorProps) {
         {/* Botón para deshacer */}
         <Button
           size="sm"
+          type="button"
           variant="outline"
           onClick={() => editor.chain().focus().undo().run()}
           disabled={!editor.can().undo()}
@@ -222,6 +223,7 @@ export default function TiptapEditor(props: TiptapEditorProps) {
         {/* Botón para rehacer */}
         <Button
           size="sm"
+          type="button"
           variant="outline"
           onClick={() => editor.chain().focus().redo().run()}
           disabled={!editor.can().redo()}
