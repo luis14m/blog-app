@@ -6,7 +6,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PenSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
-import Comments from "@/components/comments";
+import   { CommentsList } from "@/components/comments-list";
+import  { CommentsCreate } from "@/components/comments-create";  
 import { getPostBySlug } from "@/lib/actions/post.server";
 import { getPostAttachments } from "@/lib/actions/attachment.server";
 import { getHTMLFromContent } from "@/lib/utils";
@@ -189,7 +190,12 @@ export default async function BlogPostPage(props: {
 
         {/* Comments section */}
         <Suspense fallback={<CommentSkeleton />}>
-          <Comments postId={post.id} />
+        <CommentsCreate 
+        postId={post.id} 
+        user={userData?.user} 
+        /* //onCommentCreated={...}  */
+        />
+        <CommentsList postId={post.id} />
         </Suspense>
       </div>
     );
