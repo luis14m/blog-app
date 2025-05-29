@@ -6,13 +6,12 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PenSquare } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
-import { formatDistanceToNow } from "date-fns";
 import Comments from "@/components/comments";
-
 import { getPostBySlug } from "@/lib/actions/post.server";
 import { getPostAttachments } from "@/lib/actions/attachment.server";
 import { getHTMLFromContent } from "@/lib/utils";
 import { formatFileSize } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
 
 export default async function BlogPostPage(props: {
   params: Promise<{ slug: string }>;
@@ -45,139 +44,146 @@ export default async function BlogPostPage(props: {
 
     return (
       <div className="container max-w-4xl py-8">
+        {/* Card envuelve todo el post */}
         {/* Post header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-4xl font-bold leading-tight">{post.title}</h1>
-            {isOwner && (
-              <Button asChild variant="outline" size="sm">
-                <Link href={`/blog/edit/${post.id}`}>
-                  <PenSquare className="mr-2 h-4 w-4" />
-                  Edit Post
-                </Link>
-              </Button>
-            )}
-          </div>
+        <Card className="p-6">
+          <div className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-4xl font-bold leading-tight">{post.title}</h1>
+              {isOwner && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/blog/edit/${post.id}`}>
+                    <PenSquare className="mr-2 h-4 w-4" />
+                    Editar Post
+                  </Link>
+                </Button>
+              )}
+            </div>
 
-          <div className="flex items-center gap-4 text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
-                <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-medium">
-                  {(
-                    post.profiles?.display_name ||
-                    post.profiles?.username ||
-                    "User"
-                  )
-                    .charAt(0)
-                    .toUpperCase()}
+            <div className="flex items-center gap-4 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
+                  <div className="h-full w-full flex items-center justify-center bg-primary/10 text-primary font-medium">
+                    {(post.profiles?.display_name).charAt(0).toUpperCase()}
+                  </div>
                 </div>
+                <span>{post.profiles?.display_name}</span>
               </div>
-              <span>
-                {post.profiles?.display_name ||
-                  post.profiles?.username ||
-                  "Anonymous"}
-              </span>
-            </div>
-            <span>•</span>
-            <time dateTime={post.created_at}>
-              {formatDistanceToNow(new Date(post.created_at), {
-                addSuffix: true,
-              })}
-            </time>
+              <span>•</span>
+              <time dateTime={post.created_at}>
+                {(() => {
+                  const d = new Date(post.created_at);
+                  const pad = (n: number) => n.toString().padStart(2, "0");
+                  return `${pad(d.getDate())}-${pad(
+                    d.getMonth() + 1
+                  )}-${d.getFullYear()} ${pad(d.getHours())}:${pad(
+                    d.getMinutes()
+                  )}`;
+                })()}
+              </time>
 
-            {!post.published && (
-              <>
-                <span>•</span>
-                <span className="text-yellow-500 dark:text-yellow-400 font-medium">
-                  Draft
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Date label */}
-        {post.fecha && (
-          <div className="flex items-center gap-2 text-muted-foreground mb-6">
-            <span className="text-sm font-medium">Fecha:</span>
-            <time dateTime={post.fecha} className="text-sm">
-              {new Date(post.fecha).toLocaleDateString("es-ES", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
-          </div>
-        )}
-
-        {/* Post content */}
-        <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
-          {/* Renderiza el contenido generateHTML si es JSON */}
-
-          <div
-            dangerouslySetInnerHTML={{
-              __html: getHTMLFromContent(post.content),
-            }}
-          />
-        </div>
-
-        {/* Post attachments */}
-        {attachments && attachments.length > 0 && (
-          <div className="mb-12">
-            <h3 className="text-xl font-bold mb-4">Archivos Adjuntos</h3>
-            <div className="grid gap-2">
-              {attachments.map((attachment) => {
-                // Mostrar extension del archivo
-                let fileTypeLabel = "FILE";
-                if (
-                  attachment.file_type ===
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-                  attachment.file_type === "application/vnd.ms-excel"
-                ) {
-                  fileTypeLabel = "XLSX";
-                } else if (
-                  attachment.file_type ===
-                    "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
-                  attachment.file_type === "application/msword"
-                ) {
-                  fileTypeLabel = "DOCX";
-                } else if (attachment.file_type) {
-                  const parts = attachment.file_type.split("/");
-                  if (parts.length > 1) fileTypeLabel = parts[1].toUpperCase();
-                }
-                // Usar directamente attachment.file_url como href
-                return (
-                  <a
-                    key={attachment.id}
-                    href={attachment.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ width: "fit-content", maxWidth: "100%" }}
-                    className="flex items-center gap-2 p-2 border rounded-md hover:bg-accent/50 transition-colors"
-                  >
-                    <div className="h-8 w-8 bg-muted flex items-center justify-center rounded">
-                      {attachment.file_type.startsWith("image/") ? (
-                        <img
-                          src={attachment.file_url}
-                          alt={attachment.file_name}
-                          className="h-8 w-8 object-cover rounded"
-                        />
-                      ) : (
-                        <span className="text-xs">{fileTypeLabel}</span>
-                      )}
-                    </div>
-                    <span className="truncate max-w-[160px]">
-                      {attachment.file_name}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatFileSize(attachment.file_size)}
-                    </span>
-                  </a>
-                );
-              })}
+              {!post.published && (
+                <>
+                  <span>•</span>
+                  <span className="text-yellow-500 dark:text-yellow-400 font-medium">
+                    Draft
+                  </span>
+                </>
+              )}
             </div>
           </div>
-        )}
+
+          {/* Post excerpt */}
+          {post.excerpt && (
+            <p className="text-lg text-muted-foreground mb-6">{post.excerpt}</p>
+          )}
+
+          {/* Date label */}
+          {post.fecha && (
+            <div className="flex items-center gap-2 text-muted-foreground mb-6">
+              <span className="text-sm font-medium">Fecha inicio:</span>
+              <time dateTime={post.fecha} className="text-sm">
+                {new Date(post.fecha).toLocaleDateString("es-ES", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+            </div>
+          )}
+
+          {/* Post content */}
+          <div className="prose prose-lg dark:prose-invert max-w-none mb-12">
+            {/* Renderiza el contenido generateHTML si es JSON */}
+            <div className="bg-card rounded-lg shadow p-6 border">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: getHTMLFromContent(post.content),
+                }}
+              />
+            </div>
+          </div>
+          {/* Post attachments */}
+          {attachments && attachments.length > 0 && (
+            <div className="mb-12">
+              <h3 className="text-xl font-bold mb-4">Archivos Adjuntos</h3>
+              <div className="grid gap-2">
+                {attachments.map((attachment) => {
+                  // Mostrar extension del archivo
+                  let fileTypeLabel = "FILE";
+                  if (
+                    attachment.file_type ===
+                      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                    attachment.file_type === "application/vnd.ms-excel"
+                  ) {
+                    fileTypeLabel = "XLSX";
+                  } else if (
+                    attachment.file_type ===
+                      "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+                    attachment.file_type === "application/msword"
+                  ) {
+                    fileTypeLabel = "DOCX";
+                  } else if (attachment.file_type) {
+                    const parts = attachment.file_type.split("/");
+                    if (parts.length > 1)
+                      fileTypeLabel = parts[1].toUpperCase();
+                  }
+                  // Usar directamente attachment.file_url como href
+                  return (
+                    <a
+                      key={attachment.id}
+                      href={attachment.file_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ width: "fit-content", maxWidth: "100%" }}
+                      className="flex items-center gap-2 p-2 border rounded-md hover:bg-accent/50 transition-colors"
+                    >
+                      <div className="h-8 w-8 bg-muted flex items-center justify-center rounded">
+                        {attachment.file_type.startsWith("image/") ? (
+                          <img
+                            src={attachment.file_url}
+                            alt={attachment.file_name}
+                            className="h-8 w-8 object-cover rounded"
+                          />
+                        ) : (
+                          <span className="text-xs">{fileTypeLabel}</span>
+                        )}
+                      </div>
+                      <span className="truncate max-w-[160px]">
+                        {attachment.file_name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatFileSize(attachment.file_size)}
+                      </span>
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Separator */}
 
         <Separator className="my-8" />
 

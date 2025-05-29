@@ -118,7 +118,7 @@ export function NewPostSheet() {
       closeSheet();
       toast.success("Post creado con éxito");
       router.refresh();
-      redirect("/blog");
+      router.push("/blog");
       setIsLoading(false);
       if (timeoutId) clearTimeout(timeoutId);
     } catch (error: any) {
@@ -173,7 +173,7 @@ export function NewPostSheet() {
                     placeholder="Selecciona una fecha"
                   />
                 </FormControl>
-                <FormDescription>Fecha de inicio del proyecto.</FormDescription>
+                <FormDescription>Fecha de inicio de la Obra.</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -192,8 +192,7 @@ export function NewPostSheet() {
                   />
                 </FormControl>
                 <FormDescription>
-                  Un resumen corto que describe los aspectos principales del
-                  proyecto.
+                  Un resumen corto que describe los aspectos principales.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -259,10 +258,10 @@ export function NewPostSheet() {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel>Publish immediately</FormLabel>
+                  <FormLabel>Publicar Inmediatamente</FormLabel>
                   <FormDescription>
-                    If checked, this post will be visible to everyone.
-                    Otherwise, it will be saved as a draft.
+                    Si checkeado, este post sera visible para todos.
+                    De lo contrario, se guardará como borrador.
                   </FormDescription>
                 </div>
               </FormItem>

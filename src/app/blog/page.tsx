@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import Link from "next/link";
 import { getPublishedPosts } from "@/lib/actions/post.client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,7 +37,7 @@ export default function BlogPage() {
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-       {/* <p className="text-muted-foreground">Cargando posts...</p> */}
+        {/* <p className="text-muted-foreground">Cargando posts...</p> */}
       </div>
     );
   }
@@ -60,7 +60,7 @@ export default function BlogPage() {
             placeholder="Filtrar"
             className="border rounded-md px-3 py-2 pr-10 w-full focus:outline-none focus:ring-2 focus:ring-accent bg-background text-base"
             value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
           {/* <button
             type="submit"
@@ -92,20 +92,19 @@ export default function BlogPage() {
                   <div className="h-8 w-8 rounded-full bg-muted overflow-hidden">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>
-                        {(post.profiles?.display_name)
-                          .charAt(0)
-                          .toUpperCase()}
+                        {(post.profiles?.display_name).charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="text-sm">
-                    <p className="font-medium">
-                      {post.profiles?.display_name}
-                    </p>
+                    <p className="font-medium">{post.profiles?.display_name}</p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(post.created_at).toLocaleDateString()}
+                      {new Date(post.created_at).toLocaleDateString("es-CL", {
+                        year: "numeric",
+                        month: "numeric",
+                        day: "numeric",
+                      })}
                     </p>
-                    
                   </div>
                 </div>
               </div>
@@ -114,7 +113,7 @@ export default function BlogPage() {
         ) : (
           <div className="col-span-full text-center py-12">
             <p className="text-muted-foreground">
-              No posts yet. Be the first to create one!
+             No hay publicaciones aún. ¡Sé el primero en publicar!
             </p>
           </div>
         )}

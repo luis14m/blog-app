@@ -29,7 +29,7 @@ export async function createPost(
   if (postError) {
     throw postError;
   }
-
+  revalidatePath('/blog'); // Revalidate the dashboard after creating a post
   return post;
 }
 

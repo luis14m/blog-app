@@ -207,7 +207,8 @@ export default function TiptapEditor(props: TiptapEditorProps) {
           <ListOrdered className="h-4 w-4" />
         </Toggle>
 
-        <Separator orientation="vertical" className="mx-1 h-6" />
+        
+         <Separator orientation="vertical" className="mx-1 h-6" />
 
         {/* Botón para deshacer */}
         <Button
@@ -233,13 +234,14 @@ export default function TiptapEditor(props: TiptapEditorProps) {
 
         <Separator orientation="vertical" className="mx-1 h-6" />
 
+    
         {/* Botón para agregar enlace */}
         <Dialog open={linkOpen} onOpenChange={setLinkOpen}>
           <DialogTrigger asChild>
             <Button
               size="sm"
               variant="outline"
-              className="ml-auto"
+              
               aria-label="Agregar enlace"
             >
               <LinkIcon className="h-4 w-4" />
@@ -259,6 +261,9 @@ export default function TiptapEditor(props: TiptapEditorProps) {
             <Button onClick={addLink}>Agregar</Button>
           </DialogContent>
         </Dialog>
+
+
+        
       </div>
       <EditorContent editor={editor} />
     </div>

@@ -115,12 +115,11 @@ export default function EditPostPage(props: PageProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSaving(true);
-    const { data: userData, error: userError } =
-        await supabase.auth.getUser();
-      if (userError || !userData.user) {
-        throw new Error("You must be logged in to update a post");
-      }
-      const userId = userData.user.id;
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      throw new Error("You must be logged in to update a post");
+    }
+    const userId = userData.user.id;
     try {
       // Envía los datos como objeto plano, igual que new-post
       await updatePost(id, {
@@ -132,7 +131,12 @@ export default function EditPostPage(props: PageProps) {
       });
       const updatedPost = await getPostById(id);
       // 2. Subir archivos al storage y asociarlos al post
-      if (updatedPost && updatedPost.id && values.archivos && values.archivos.length > 0) {
+      if (
+        updatedPost &&
+        updatedPost.id &&
+        values.archivos &&
+        values.archivos.length > 0
+      ) {
         const uploadedFiles = await uploadFiles(values.archivos);
         // Ahora tienes el updatedPost.id
         for (const file of uploadedFiles) {
@@ -164,7 +168,7 @@ export default function EditPostPage(props: PageProps) {
 
   return (
     <div className="container py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-8">Edit Post</h1>
+      <h1 className="text-3xl font-bold mb-8">Editar Post</h1>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -172,7 +176,7 @@ export default function EditPostPage(props: PageProps) {
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>Titulo</FormLabel>
                 <FormControl>
                   <Input placeholder="Enter post title" {...field} />
                 </FormControl>
@@ -185,7 +189,7 @@ export default function EditPostPage(props: PageProps) {
             name="fecha"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Date </FormLabel>
+                <FormLabel>Fecha inicio </FormLabel>
                 <FormControl>
                   <Input
                     type="date"
@@ -203,7 +207,7 @@ export default function EditPostPage(props: PageProps) {
             name="excerpt"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Excerpt</FormLabel>
+                <FormLabel>Extracto</FormLabel>
                 <FormControl>
                   <Textarea
                     placeholder="Enter a short excerpt for your post"
@@ -213,8 +217,8 @@ export default function EditPostPage(props: PageProps) {
                   />
                 </FormControl>
                 <FormDescription>
-                  A brief summary of your post that will be displayed in the
-                  post list.
+                  Un breve resumen de tu publicación que se mostrará en la lista
+                  de publicaciones.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -226,7 +230,7 @@ export default function EditPostPage(props: PageProps) {
             name="content"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Content</FormLabel>
+                <FormLabel>Contentido</FormLabel>
                 <FormControl>
                   <TiptapEditor
                     content={field.value}
@@ -281,10 +285,10 @@ export default function EditPostPage(props: PageProps) {
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel>Publish</FormLabel>
+                  <FormLabel>Publicar</FormLabel>
                   <FormDescription>
-                    If checked, this post will be visible to everyone.
-                    Otherwise, it will be saved as a draft.
+                  Si se marca, esta publicación será visible para todos. 
+                  De lo contrario, se guardará como borrador.
                   </FormDescription>
                 </div>
               </FormItem>
@@ -296,16 +300,16 @@ export default function EditPostPage(props: PageProps) {
               variant="outline"
               onClick={() => router.back()}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Guardando...
                 </>
               ) : (
-                "Update Post"
+                "Editar Post"
               )}
             </Button>
           </div>
