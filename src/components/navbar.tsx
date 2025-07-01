@@ -53,21 +53,7 @@ export default async function Navbar() {
               {/* Search bar can be added here */}
             </div>
             <nav className="flex justify-between items-center space-x-4">
-              <NavigationMenu>
-                <NavigationMenuList>
-                  <NavigationMenuItem>
-                    <NavigationMenuLink
-                      href="/blog"
-                      className={cn(
-                        navigationMenuTriggerStyle()
-                        // pathname === "/blog" && "text-primary font-medium"
-                      )}
-                    >
-                      Blog
-                    </NavigationMenuLink>
-                  </NavigationMenuItem>
-                </NavigationMenuList>
-              </NavigationMenu>
+              {/* */}
               {/* Botón para crear nuevo post (solo si hay usuario) */}
               {user && <NewPostButton user={user} />}
               {user ? (

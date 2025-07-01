@@ -21,18 +21,18 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={cn(inter.className, "min-h-screen bg-background antialiased")}>
+      <body className={cn(inter.className)}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex flex-col min-h-screen">
-            <div className="container max-w-4xl mx-auto px-4">
+          <div className="flex flex-col max-h-screen">
+            <div className=" px-4">
               <Navbar />
             </div>
-            <main className="flex-1 container max-w-4xl mx-auto px-4 py-8">
+            <main className="flex-1 px-4 py-8">
               {children}
             </main>
             

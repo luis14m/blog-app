@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getPublishedPosts } from "@/lib/actions/post.client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import React, { useEffect, useState } from "react";
-import { MessageSquareText, Search } from "lucide-react";
 
 export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
